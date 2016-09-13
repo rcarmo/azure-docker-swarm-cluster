@@ -25,8 +25,8 @@ Serendipitously, this was finished just in time to test barebones [Docker][d] Sw
 
 ## Requirements
 
-* Python (`pip install -U -r requirements.txt`)
-* The [Azure Cross-Platform CLI][https://github.com/Azure/azure-xplat-cli] (the new and improved [az][https://github.com/Azure/azure-cli] will also work, but the `Makefile` may require some tweaking)
+* Python and supporting packages (`pip install -U -r requirements.txt`)
+* The [Azure Cross-Platform CLI](https://github.com/Azure/azure-xplat-cli) (the new and to-my-eyes-improved [az][https://github.com/Azure/azure-cli] will also work, but the `Makefile` may require some tweaking)
 * (Optional) `make` (you can just read through the `Makefile` and type the commands yourself)
 * (Optional) `jq` (for parsing JSON data)
 * (Optional) a local Docker installation to rebuild the bundled test service (see the aptly named `test-service` folder)
