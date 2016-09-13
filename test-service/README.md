@@ -15,16 +15,11 @@ The app homepage provides a status display including the container hostname, req
 * `/compute/100` to perform a computation during 100ms (approximately)
 * `/compute/100,200` to perform a computation for a random interval between 100 and 200ms
 
-/hostname to obtain the hostname
-/count to get the request count.
-/compute/100 to perform a computation during 100ms (approximately)
-/compute/100,200 to perform a computation for a random interval between 100 and 200ms
-
 ## More Info
 
 A pre-built image is available from [Docker Hub][dh] as [`rcarmo/demo-frontend-stateless`][dh]. 
 
-The built-in application stack is built with [`rcarmo/alpine-python`][ap], a small Python runtime atop Alpine Linux.
+The built-in application stack uses [`rcarmo/alpine-python`][ap], a small Python runtime atop Alpine Linux.
 
 [ap]: https://github.com/rcarmo/alpine-python
 [dh]:https://hub.docker.com/r/rcarmo/demo-frontend-stateless/
