@@ -1,0 +1,2 @@
+paramiko
+click
