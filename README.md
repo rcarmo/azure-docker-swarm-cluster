@@ -8,9 +8,9 @@ This is a barebones Azure Resource Manager template that automatically deploys a
 
 ## Why
 
-This was built as a barebones cluster template (for generic services that take advantage of dynamic scaling) and tweaked to show how to provision `cloud-init` scripts, VM scalesets and other ARM templating features.
+This was built as [a barebones cluster template](http://taoofmac.com/space/blog/2016/08/07/2200) (for generic services that take advantage of dynamic scaling) and tweaked to show how to provision `cloud-init` scripts, VM scalesets and other ARM templating features.
 
-Serendipitously, this was done just in time to test barebones [Docker][d] Swarm 1.12 and demo it on an internal architecture session, and it was felt that it was in the general interest to make the template and support scripts publicly available.
+Serendipitously, this was finished just in time to test barebones [Docker][d] Swarm 1.12 and demo it on an internal architecture session, and it was felt that it was in the general interest to make the template and support scripts publicly available.
 
 ## How
 
@@ -35,9 +35,11 @@ Serendipitously, this was done just in time to test barebones [Docker][d] Swarm 
 
 A pure `bash` version will replace this in the fullness of time (the scripts used to provision the Swarm cluster were taken out of a [Python][p] application still under development to save time, and although exceedingly nice and demonstrative of a few techniques, they're not really necessary).
 
+The template will also (eventually) be updated to include Azure portal monitoring stats (in order to use the template as a teaching aid that an unexperienced person could read through and understand in one sitting, a few common configurations were removed).
+
 ## Disclaimer
 
-Keep in mind that the scripts were written for conciseness and ease of understanding -- you can use this as the basis for rolling out a production environment, but _only_ after adding some error-checking.
+Keep in mind that the scripts were written for conciseness and ease of understanding -- you can use this as the basis for rolling out a production environment, but _only_ after adding some error-checking and common ARM template configurations like Azure portal monitoring.
 
 Also keep in mind that the load-balancer configuration does _not_ include TCP port probing or proactive failure detection.
 
