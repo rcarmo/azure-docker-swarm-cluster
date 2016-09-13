@@ -19,7 +19,7 @@ Serendipitously, this was finished just in time to test barebones [Docker][d] Sw
 * `make check-deploy` - shortcut to check Azure deployment progress
 * `make check-docker` - simple check to ensure [Docker][d] is running in all nodes
 * `make provision-cluster` - provision the Swarm cluster (retrieve tokens and apply them to master and agent nodes)
-* `make provision-service` - provision a simple HTTP service (using [this Docker image]the Swarm cluster (retrieve tokens and apply them to master and agent nodes)
+* `make provision-service` - provision a simple HTTP service using [the `rcarmo/demo-frontend-stateless` Docker image][dh] (see the `test-service` folder for full source code)
 * `make ips` - list allocated public iP addresses
 * `make names` - list DNS aliases
 
@@ -45,3 +45,4 @@ Also keep in mind that the load-balancer configuration does _not_ include TCP po
 
 [d]: http://docker.com
 [p]: http://python.org
+[dh]:https://hub.docker.com/r/rcarmo/demo-frontend-stateless/
