@@ -1,19 +1,10 @@
 from base64 import b64encode
-from os.path import exists
 from os import environ
 from json import dumps
+from utils import make_key
 
-# Generate a passwordless key for automation
-if not exists("paramiko.pem"):
-    from paramiko import SSHClient, AutoAddPolicy, RSAKey
-    from StringIO import StringIO
-    k = RSAKey.generate(1024)
-    k.write_private_key_file("paramiko.pem")
-    with open("paramiko.pub", 'w') as f:
-        f.write("%s %s" % (k.get_name(), k.get_base64()))
+make_key("paramiko.pem")
 
-
-# Build the ARM template parameters, bringing in evironment variables for sizing
 params = {
     "adminUsername": {
         "value": "cluster"
@@ -25,10 +16,6 @@ params = {
         "value": int(environ.get('AGENT_COUNT',2))
     },
     "customData": {
-        # Build a cloud-init configuration that:
-        # - Adds the official Docker repository to Ubuntu
-        # - Installs the Docker engine and a few extras (including an updated kernel)
-        # - Cleans up and reboots the machine
         "value": b64encode("""#cloud-config
 runcmd:
     - apt-key adv --keyserver hkp://p80.pool.sks-keyservers.net:80 --recv-keys 58118E89F3A912897C070ADBF76221572C52609D
