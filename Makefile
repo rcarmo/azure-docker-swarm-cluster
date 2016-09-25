@@ -18,7 +18,7 @@ destroy:
 # Create a resource group and deploy the cluster resources inside it
 deploy:
 	$(AZURE_CLI) group create $(RESOURCE_GROUP) $(LOCATION)
-	$(AZURE_CLI) group deployment create -f swarm-cluster.json -e parameters.json -g $(RESOURCE_GROUP)
+	$(AZURE_CLI) group deployment create -f cluster-template.json -e parameters.json -g $(RESOURCE_GROUP)
 
 # Check on deployment progress
 check-deploy:
