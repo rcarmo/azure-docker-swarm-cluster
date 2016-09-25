@@ -85,10 +85,6 @@
         "description": "Base64 encoded, multi-line string to pass to Ubuntu cloud-init"
       }
     },
-    "nsgName": {
-      "type": "string",
-      "defaultValue": "masters"
-    },
     "asFDCount": {
       "type": "int",
       "defaultValue": 3,
@@ -110,10 +106,6 @@
         "Standard_LRS",
         "Premium_LRS"
       ]
-    },
-    "publicIpAddressType": {
-      "type": "string",
-      "defaultValue": "Dynamic"
     }
   },
   "variables": {
@@ -195,7 +187,7 @@
           "adminUsername": "[parameters('adminUsername')]",
           "customData": "[parameters('customData')]",
           "linuxConfiguration": {
-            "disablePasswordAuthentication": "true",
+            "disablePasswordAuthentication": true,
             "ssh": {
               "publicKeys": [
                 {
@@ -267,7 +259,7 @@
             "adminUsername": "[parameters('adminUsername')]",
             "customData": "[parameters('customData')]",
             "linuxConfiguration": {
-              "disablePasswordAuthentication": "true",
+              "disablePasswordAuthentication": true,
               "ssh": {
                 "publicKeys": [
                   {
@@ -303,7 +295,7 @@
               {
                 "name": "[parameters('agentPrefix')]",
                 "properties": {
-                  "primary": "true",
+                  "primary": true,
                   "ipConfigurations": [
                     {
                       "name": "[concat(parameters('agentPrefix'),'IpConfig')]",
@@ -387,7 +379,7 @@
       "apiVersion": "2015-06-15",
       "location": "[resourceGroup().location]",
       "properties": {
-        "publicIpAllocationMethod": "Dynamic",
+        "publicIPAllocationMethod": "Dynamic",
         "dnsSettings": {
           "domainNameLabel": "[concat(resourceGroup().name, '-', parameters('masterPrefix'), copyIndex())]"
         }
@@ -453,7 +445,7 @@
               "backendAddressPool": {
                 "id": "[concat(resourceId('Microsoft.Network/loadBalancers',parameters('agentPrefix')),'/backendAddressPools/agentPool')]"
               },
-              "protocol": "tcp",
+              "protocol": "Tcp",
               "frontendPort": 80,
               "backendPort": 80,
               "enableFloatingIP": false,
@@ -468,9 +460,9 @@
           {
             "name": "tcpProbe",
             "properties": {
-              "protocol": "tcp",
+              "protocol": "Tcp",
               "port": 80,
-              "intervalInSeconds": 5,
+              "intervalInSeconds": 10,
               "numberOfProbes": 2
             }
           }
