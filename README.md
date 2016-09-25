@@ -35,7 +35,7 @@ Serendipitously, this was finished just in time to test barebones [Docker][d] Sw
 
 A pure `bash` version will replace this in the fullness of time (the scripts used to provision the Swarm cluster were taken out of a [Python][p] application still under development to save time, and although exceedingly nice and demonstrative of a few techniques, they're not really necessary).
 
-The template will also (eventually) be updated to include Azure portal monitoring stats (in order to use the template as a teaching aid that an unexperienced person could read through and understand in one sitting, a few common configurations were removed).
+The template will also (eventually) be updated to include more complex Azure portal monitoring stats (in order to use the template as a teaching aid that an unexperienced person could read through and understand in one sitting, a few common configurations were removed).
 
 ## Disclaimer
 
