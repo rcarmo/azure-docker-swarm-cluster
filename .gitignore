@@ -87,3 +87,8 @@ ENV/
 
 # Rope project settings
 .ropeproject
+
+# Byproducts
+paramiko.pem
+paramiko.pub
+parameters.json
