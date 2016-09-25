@@ -125,7 +125,7 @@
   "resources": [
     {
       "type": "Microsoft.Storage/storageAccounts",
-      "name": "[variables('saName')]",
+      "name": "[concat(variables('saName'))]",
       "apiVersion": "2015-06-15",
       "location": "[resourceGroup().location]",
       "properties": {
@@ -213,6 +213,7 @@
             "vhd": {
               "uri": "[concat('https', '://', variables('saName'), '.blob.core.windows.net', concat('/vhds/', 'osdisk', copyIndex(),'.vhd'))]"
             },
+            "caching": "ReadWrite",
             "createOption": "FromImage"
           },
           "dataDisks": []
@@ -226,6 +227,12 @@
         },
         "availabilitySet": {
           "id": "[resourceId('Microsoft.Compute/availabilitySets', 'masters')]"
+        },
+        "diagnosticsProfile": {
+          "bootDiagnostics": {
+            "enabled": true,
+            "storageUri": "[concat('https', '://', variables('saName'), '.blob.core.windows.net')]"
+          }
         }
       },
       "dependsOn": [
@@ -280,7 +287,7 @@
                 "[concat('https://', variables('saNameArray')[4], '.blob.core.windows.net/', 'vhds')]"
               ],
               "name": "osdisk.vhd",
-              "caching": "ReadOnly",
+              "caching": "ReadWrite",
               "createOption": "FromImage"
             },
             "imageReference": {
@@ -288,6 +295,12 @@
               "offer": "UbuntuServer",
               "sku": "16.04.0-LTS",
               "version": "latest"
+            }
+          },
+          "diagnosticsProfile": {
+            "bootDiagnostics": {
+              "enabled": true,
+              "storageUri": "[concat('https', '://', variables('saName'), '.blob.core.windows.net')]"
             }
           },
           "networkProfile": {
