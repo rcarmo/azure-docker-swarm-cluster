@@ -1,45 +1,74 @@
 # Set environment variables (if they're not defined yet)
-export RESOURCE_GROUP?=swarm-test
-export LOCATION?=westeurope
-# This lets us run this scenario under Cygwin
-export AZURE_CLI?=azure.cmd
-export MASTER_COUNT?=3
-export AGENT_COUNT?=5
+export RESOURCE_GROUP?=swarm-demo
+export LOCATION?=northeurope
+export AZURE_CLI?=az
+export MASTER_COUNT?=1
+export AGENT_COUNT?=3
+export MASTER_FQDN=$(RESOURCE_GROUP)-master0.$(LOCATION).cloudapp.azure.com
 
-# Generate the Azure Resource Template parameter file
-params:
-	python genparams.py 
-	cat parameters.json
+SSH_KEY_FILES := cluster.pem cluster.pub
+PARAMETER_FILES := parameters-masters.json parameters-agents.json
+
+# Generate SSH keys for the cluster
+keys:
+	ssh-keygen -b 2048 -t rsa -f cluster -q -N ""
+	mv cluster cluster.pem
+
+
+# Generate the Azure Resource Template parameter files
+params: $(SSH_KEY_FILES) cloud-config-master.yml cloud-config-agent.yml
+	python genparams.py
+
 
 # Destroy the entire resource group and all cluster resources
 destroy:
-	$(AZURE_CLI) group delete $(RESOURCE_GROUP)
+	$(AZURE_CLI) resource group delete --name $(RESOURCE_GROUP)
+
 
 # Create a resource group and deploy the cluster resources inside it
 deploy:
-	$(AZURE_CLI) group create $(RESOURCE_GROUP) $(LOCATION)
-	$(AZURE_CLI) group deployment create -f cluster-template.json -e parameters.json -g $(RESOURCE_GROUP)
+	-$(AZURE_CLI) resource group create --name $(RESOURCE_GROUP) --location $(LOCATION) --output table 
+	$(AZURE_CLI) resource group deployment create --template-file-path cluster-template.json --parameters-file-path parameters.json --resource-group $(RESOURCE_GROUP) --name cli-deployment-$(LOCATION) --output table
 
-# Check on deployment progress
-check-deploy:
-	$(AZURE_CLI) group deployment list $(RESOURCE_GROUP)
 
-# Check Docker daemon status across nodes
-check-docker:
-	python check-docker.py
+clean:
+	rm -f cluster.pem cluster.pub parameters.json
 
-# Provision the Swarm cluster by initializing it and distributing master and agent tokens
-provision-cluster:
-	python provision-cluster.py
 
-# Provision a simple test service on every node in the cluster
-provision-service:
-	python provision-service.py
+deploy-monitor:
+	ssh -i cluster.pem cluster@$(MASTER_FQDN) \
+	docker run -it -d -p 8080:8080 -e HOST=$(MASTER_FQDN) -v /var/run/docker.sock:/var/run/docker.sock manomarks/visualizer 
 
-# Dump the public IP addresses in use
-ips:
-	$(AZURE_CLI) network public-ip list
 
-# Dump the DNS aliases that were provisioned (requires jq)
-names:
-	$(AZURE_CLI) network public-ip list --json | jq ".[] | .dnsSettings.fqdn"
+deploy-service:
+	ssh -i cluster.pem cluster@$(MASTER_FQDN) \
+	docker service create --name demo --replicas=8 --publish 80:8000 rcarmo/demo-frontend-stateless
+
+
+scale-service-%:
+	ssh -i cluster.pem cluster@$(MASTER_FQDN) \
+	docker service scale demo=$*
+
+
+update-service:
+	ssh -i cluster.pem cluster@$(MASTER_FQDN) \
+	docker service update demo
+
+ssh-master:
+	ssh-add cluster.pem
+	ssh -A -i cluster.pem cluster@$(MASTER_FQDN)
+
+
+tail-helper:
+	ssh -i cluster.pem cluster@$(MASTER_FQDN) sudo journalctl -f -u swarm-helper
+
+
+scale-%:
+	$(AZURE_CLI) vmss scale --resource-group $(RESOURCE_GROUP) --name agent --new-capacity $* --output table 
+
+list:
+	$(AZURE_CLI) vmss list-instances --resource-group $(RESOURCE_GROUP) --name agent --output table 
+
+
+endpoints:
+	$(AZURE_CLI) network public-ip list --query '[].{dnsSettings:dnsSettings.fqdn}' --resource-group $(RESOURCE_GROUP) --output table

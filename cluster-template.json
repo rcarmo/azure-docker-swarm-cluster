@@ -78,7 +78,14 @@
         "description": "ssh public key for connecting to VMs."
       }
     },
-    "customData": {
+    "masterCustomData": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Base64 encoded, multi-line string to pass to Ubuntu cloud-init"
+      }
+    },
+    "agentCustomData": {
       "type": "string",
       "defaultValue": "",
       "metadata": {
@@ -109,6 +116,7 @@
     }
   },
   "variables": {
+    "diagsName": "[toLower(substring(concat(parameters('masterPrefix'), 'diag',  uniqueString(resourceGroup().id)), 0, 11))]",
     "saName": "[toLower(substring(concat(parameters('masterPrefix'), 'sa',  uniqueString(resourceGroup().id)), 0, 11))]",
     "saCount": 5,
     "saNameArray": [
@@ -123,6 +131,15 @@
     "natBackendPort": 22
   },
   "resources": [
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[variables('diagsName')]",
+      "apiVersion": "2015-06-15",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "accountType": "Standard_LRS"
+      }
+    },
     {
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('saName')]",
@@ -185,7 +202,7 @@
         "osProfile": {
           "computerName": "[concat(parameters('masterPrefix'),copyIndex())]",
           "adminUsername": "[parameters('adminUsername')]",
-          "customData": "[parameters('customData')]",
+          "customData": "[parameters('masterCustomData')]",
           "linuxConfiguration": {
             "disablePasswordAuthentication": true,
             "ssh": {
@@ -231,14 +248,15 @@
         "diagnosticsProfile": {
           "bootDiagnostics": {
             "enabled": true,
-            "storageUri": "[concat('https', '://', variables('saName'), '.blob.core.windows.net')]"
+            "storageUri": "[concat('https', '://', variables('diagsName'), '.blob.core.windows.net')]"
           }
         }
       },
       "dependsOn": [
         "[concat('Microsoft.Network/networkInterfaces/', parameters('masterPrefix'), copyIndex())]",
         "[concat('Microsoft.Compute/availabilitySets/', 'masters')]",
-        "[concat('Microsoft.Storage/storageAccounts/', variables('saName'))]"
+        "[concat('Microsoft.Storage/storageAccounts/', variables('saName'))]",
+        "[concat('Microsoft.Storage/storageAccounts/', variables('diagsName'))]"
       ]
     },
     {
@@ -248,7 +266,8 @@
       "apiVersion": "2016-03-30",
       "dependsOn": [
         "storageLoop",
-        "[concat('Microsoft.Network/loadBalancers/', parameters('agentPrefix'))]"
+        "[concat('Microsoft.Network/loadBalancers/', parameters('agentPrefix'))]",
+        "[concat('Microsoft.Storage/storageAccounts/', variables('diagsName'))]"
       ],
       "sku": {
         "name": "[parameters('agentSize')]",
@@ -264,7 +283,7 @@
           "osProfile": {
             "computerNamePrefix": "[parameters('agentPrefix')]",
             "adminUsername": "[parameters('adminUsername')]",
-            "customData": "[parameters('customData')]",
+            "customData": "[parameters('agentCustomData')]",
             "linuxConfiguration": {
               "disablePasswordAuthentication": true,
               "ssh": {
@@ -300,7 +319,7 @@
           "diagnosticsProfile": {
             "bootDiagnostics": {
               "enabled": true,
-              "storageUri": "[concat('https', '://', variables('saName'), '.blob.core.windows.net')]"
+              "storageUri": "[concat('https', '://', variables('diagsName'), '.blob.core.windows.net')]"
             }
           },
           "networkProfile": {
