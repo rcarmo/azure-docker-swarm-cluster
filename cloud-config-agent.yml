@@ -59,7 +59,7 @@ packages:
   #- tmux
   #- htop
   #- vim
-  #- fail2ban
+  - fail2ban
   #- curl
 
 runcmd:
