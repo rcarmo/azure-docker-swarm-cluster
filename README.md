@@ -74,7 +74,7 @@ This is done in the simplest possible way, by using `cloud-init` to bootstrap a 
 
 ## Provisioning Flow
 
-To avoid using VM extensions and to ensure each fresh deployment runs the latest Docker version, VMs are provisioned using `customData` in their respective ARM templates. 
+To avoid using VM extensions (which are nice, but opaque to most people used to using `cloud-init`) and to ensure each fresh deployment runs the latest Docker version, VMs are provisioned using `customData` in their respective ARM templates. 
 
 `cloud-init` files and SSH keys are then packed into the JSON parameters file and submitted as a single provisioning transaction, and upon first boot Ubuntu takes the `cloud-init` file and provisions the machine accordingly.
 
@@ -88,6 +88,7 @@ There are several things that can be done to improve upon this:
 * Strengthen the token exchange mechanism (adding SSL and/or a shared `nonce` to the registration/draining URLs is left as an exercise to the reader)
 * Find ways to nudge Swarm into re-balancing the load between nodes (there are already multiple approaches for this in the [Docker][d] issue list - (re)tagging might be the simplest)
 * Stop instances and leave their resources allocated instead of destroying them completely upon rescaling, for faster scale-ups
+* Turn on CPU-based auto-scaling in Azure (again, it's off largely because this is simpler to understand)
 
 ## Disclaimers
 
@@ -95,7 +96,7 @@ Keep in mind that this was written for conciseness and ease of understanding -- 
 
 The [Docker][d] way of achieving cluster self-provisioning relies on service-specific containers baked into their cloud images (and does not seem to allow for dynamically adding or removing nodes), so the approach in this repo is not canon - but it might be more interesting (and easier to expand upon) for people learning how to use [Docker][d] Swarm. 
 
-Also keep in mind that the load-balancer configuration does _not_ include TCP port probing or proactive failure detection.
+Also, keep in mind that the load-balancer configuration does _not_ include TCP port probing or proactive failure detection.
 
 [d]: http://docker.com
 [p]: http://python.org
