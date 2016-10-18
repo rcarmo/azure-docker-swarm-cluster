@@ -23,6 +23,8 @@ This was originally built as [a barebones cluster template](http://taoofmac.com/
 * `make deploy-service` - deploys a simple web service onto the Swarm cluster
 * `make scale-service-<number>` - scales the demo service to `<number>` instances, i.e., `make scale-service-10` will resize it (up or down) to 10 containers
 * `make scale-<number>` - scales the worker VM scale set to `<number>` instances, i.e., `make scale-10` will resize it (up or down) to 10 VMs
+* `make stop` - stops all worker VMs
+* `make start` - starts all worker VMs
 * `make ssh-master` - opens an SSH session to `master0`
 * `make tail-helper` - opens an SSH session to `master0` and tails the `swarm-helper` log
 * `make endpoints` - list DNS aliases
@@ -34,20 +36,35 @@ This was originally built as [a barebones cluster template](http://taoofmac.com/
     make keys
     make params
     make deploy
-    # go to the Azure portal and check the deployment progress
+    # Go to the Azure portal and check the deployment progress
+    
+    # now deploy the Swarm monitor UI
     make deploy-monitor
-    # do a make endpoints and open a browser to the master FQDN, port 8080 to see the Swarm visualizer
-    make deploy-service
-    # watch as the containers start on the cluster
+    # Do a make endpoints to check the FQDNs and open a browser to the master FQDN, port 8080 to see the Swarm visualizer
     make endpoints
-    # open the agent-lb endpoint in a browser, refresh to hit a different node
+    
+    # Now deploy the test service and watch as containers are loaded and run
+    make deploy-service
+    # Open the agent-lb endpoint in a browser, refresh to hit a different node (from outside Azure, Swarm is still quirky)
+    make endpoints
+
+    # Scale the service down
     make scale-service-4
+    
+    # Now scale the VM scale set and watch as new VMs join the cluster
     make scale-7
-    # watch as new VMs join the cluster
+    # Add more service workers, and watch them spread through the cluster
     make scale-service-16
-    # watch as the service spreads through the cluster
+    
+    # Now scale down the VM scale set and watch Swarm coping by re-scheduling workers
     make scale-3
-    # watch as Swarm tries to cope with loss of resources by rescheduling containers to new machines
+     
+    # Stop (but not de-allocate) worker VMs and watch all containers move to the master (because we have no scheduling rules)
+    make stop
+    # Now re-start them
+    make start
+    
+    # Clean up after we're done working
     make destroy
 
 
