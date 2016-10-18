@@ -2,6 +2,7 @@ from os import environ
 from bottle import route, view, run, static_file
 from socket import gethostname
 from time import time
+from datetime import datetime
 from random import randint, seed
 
 request_count = 0
@@ -13,7 +14,7 @@ seed()
 def homepage():
     global request_count
     request_count = request_count + 1
-    return {'hostname': gethostname(), 'requests': request_count}
+    return {'hostname': gethostname(), 'requests': request_count, 'timestr': datetime.now().strftime("%H:%M:%S.%f")}
 
 @route('/hostname')
 def get_name():
@@ -29,7 +30,7 @@ def get_count():
 @route('/stats')
 def get_count():
     global request_count, compute_time
-    return "%s: %d requests, %d ms computed" % (gethostname(), request_count, compute_time)
+    return "%s: %d requests, %d ms computed, time is %f" % (gethostname(), request_count, compute_time, time())
 
 @route('/reset')
 def get_count():

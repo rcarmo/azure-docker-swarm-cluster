@@ -16,6 +16,7 @@
 		<nav class="float-right">
 			<ul>
 				<li>{{!requests}} requests</li>
+				<li>{{!timestr}}</li>
 			</ul>
 		</nav>
 	</header>
