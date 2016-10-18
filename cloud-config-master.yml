@@ -66,6 +66,7 @@ apt:
 #apt_upgrade: true
 
 packages:
+  - ntp
   - docker-engine
   - tmux
   - htop
