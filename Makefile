@@ -5,6 +5,7 @@ export AZURE_CLI?=az
 export MASTER_COUNT?=1
 export AGENT_COUNT?=3
 export MASTER_FQDN=$(RESOURCE_GROUP)-master0.$(LOCATION).cloudapp.azure.com
+export VMSS_NAME=agent
 
 SSH_KEY_FILES := cluster.pem cluster.pub
 PARAMETER_FILES := parameters-masters.json parameters-agents.json
@@ -64,10 +65,19 @@ tail-helper:
 
 
 scale-%:
-	$(AZURE_CLI) vmss scale --resource-group $(RESOURCE_GROUP) --name agent --new-capacity $* --output table 
+	$(AZURE_CLI) vmss scale --resource-group $(RESOURCE_GROUP) --name $(VMSS_NAME) --new-capacity $* --output table 
+
+
+stop:
+	$(AZURE_CLI) vmss stop --resource-group $(RESOURCE_GROUP) --name $(VMSS_NAME) --output table 
+
+
+start:
+	$(AZURE_CLI) vmss start --resource-group $(RESOURCE_GROUP) --name $(VMSS_NAME) --output table 
+
 
 list:
-	$(AZURE_CLI) vmss list-instances --resource-group $(RESOURCE_GROUP) --name agent --output table 
+	$(AZURE_CLI) vmss list-instances --resource-group $(RESOURCE_GROUP) --name $(VMSS_NAME) --output table 
 
 
 endpoints:
