@@ -1,5 +1,5 @@
 # Set environment variables (if they're not defined yet)
-export RESOURCE_GROUP?=swarm-jws
+export RESOURCE_GROUP?=swarm-demo
 export LOCATION?=northeurope
 export AZURE_CLI?=az
 export MASTER_COUNT?=1
