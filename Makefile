@@ -1,5 +1,5 @@
 # Set environment variables (if they're not defined yet)
-export RESOURCE_GROUP?=swarm-demo
+export RESOURCE_GROUP?=swarm-jws
 export LOCATION?=northeurope
 export AZURE_CLI?=az
 export MASTER_COUNT?=1
@@ -30,12 +30,12 @@ params: $(SSH_KEY_FILES) cloud-config-master.yml cloud-config-agent.yml
 
 
 # Destroy the entire resource group and all cluster resources
-destroy:
+destroy-cluster:
 	$(AZURE_CLI) resource group delete --name $(RESOURCE_GROUP)
 
 
 # Create a resource group and deploy the cluster resources inside it
-deploy:
+deploy-cluster:
 	-$(AZURE_CLI) resource group create --name $(RESOURCE_GROUP) --location $(LOCATION) --output table 
 	$(AZURE_CLI) resource group deployment create --template-file-path cluster-template.json --parameters-file-path parameters.json --resource-group $(RESOURCE_GROUP) --name cli-deployment-$(LOCATION) --output table
 
@@ -48,20 +48,30 @@ deploy-monitor:
 	ssh -i cluster.pem cluster@$(MASTER_FQDN) \
 	docker run -it -d -p 8080:8080 -e HOST=$(MASTER_FQDN) -v /var/run/docker.sock:/var/run/docker.sock manomarks/visualizer 
 
-# Deploy the demo service
-deploy-service:
+# Kill the swarm monitor
+kill-monitor:
 	ssh -i cluster.pem cluster@$(MASTER_FQDN) \
-	docker service create --name demo --replicas=8 --publish 80:8000 rcarmo/demo-frontend-stateless
+	"docker ps | grep manomarks/visualizer | cut -d\  -f 1 | xargs docker kill"
+
+# Deploy the demo service
+deploy-replicated-service:
+	ssh -i cluster.pem cluster@$(MASTER_FQDN) \
+	docker service create --name replicated --replicas=8 --publish 80:8000 rcarmo/demo-frontend-stateless
+
+# Deploy the demo service
+deploy-global-service:
+	ssh -i cluster.pem cluster@$(MASTER_FQDN) \
+	docker service create --name global --publish 81:8000 --mode global rcarmo/demo-frontend-stateless
 
 # Scale the demo service
 scale-service-%:
 	ssh -i cluster.pem cluster@$(MASTER_FQDN) \
-	docker service scale demo=$*
+	docker service scale replcated=$*
 
 # Update the service (rebalancing doesn't work yet)
 update-service:
 	ssh -i cluster.pem cluster@$(MASTER_FQDN) \
-	docker service update demo
+	docker service update replcated
 
 # SSH to master node
 ssh-master:
@@ -71,22 +81,22 @@ ssh-master:
 tail-helper:
 	ssh -i cluster.pem cluster@$(MASTER_FQDN) sudo journalctl -f -u swarm-helper
 
+# List VMSS instances
+list-vmss:
+	$(AZURE_CLI) vmss list-instances --resource-group $(RESOURCE_GROUP) --name $(VMSS_NAME) --output table 
+
 # Scale VMSS instances
-scale-%:
+scale-vmss-%:
 	$(AZURE_CLI) vmss scale --resource-group $(RESOURCE_GROUP) --name $(VMSS_NAME) --new-capacity $* --output table 
 
 # Stop all VMSS instances
-stop:
+stop-vmss:
 	$(AZURE_CLI) vmss stop --resource-group $(RESOURCE_GROUP) --name $(VMSS_NAME) --output table 
 
 # Start all VMSS instances
-start:
+start-vmss:
 	$(AZURE_CLI) vmss start --resource-group $(RESOURCE_GROUP) --name $(VMSS_NAME) --output table 
 
-# List all VMSS instances
-list:
-	$(AZURE_CLI) vmss list-instances --resource-group $(RESOURCE_GROUP) --name $(VMSS_NAME) --output table 
-
 # List endpoints
-endpoints:
+list-endpoints:
 	$(AZURE_CLI) network public-ip list --query '[].{dnsSettings:dnsSettings.fqdn}' --resource-group $(RESOURCE_GROUP) --output table

@@ -18,24 +18,26 @@ This was originally built as [a barebones cluster template](http://taoofmac.com/
 
 * `make keys` - generates an SSH key for provisioning
 * `make params` - generates ARM template parameters
-* `make deploy` - deploys cluster resources and pre-provisions Docker on all machines
+* `make deploy-cluster` - deploys cluster resources and pre-provisions Docker on all machines
 * `make deploy-monitor` - deploys a Swarm monitor container on `http://master0:8080`
-* `make deploy-service` - deploys a simple web service onto the Swarm cluster
-* `make scale-service-<number>` - scales the demo service to `<number>` instances, i.e., `make scale-service-10` will resize it (up or down) to 10 containers
-* `make scale-<number>` - scales the worker VM scale set to `<number>` instances, i.e., `make scale-10` will resize it (up or down) to 10 VMs
-* `make stop` - stops all worker VMs
-* `make start` - starts all worker VMs
+* `make deploy-replicated-service` - deploys a simple web service onto the Swarm cluster (8 replicas)
+* `make deploy-global-service` - deploys a simple web service onto the Swarm cluster (one container per node)
+* `make scale-service-<number>` - scales the replicated service to `<number>` instances, i.e., `make scale-service-10` will resize it (up or down) to 10 containers
+* `make list-vmss` - lists all worker VMs
+* `make scale-vmss-<number>` - scales the worker VM scale set to `<number>` instances, i.e., `make scale-10` will resize it (up or down) to 10 VMs
+* `make stop-vmss` - stops all worker VMs
+* `make start-vmss` - starts all worker VMs
 * `make ssh-master` - opens an SSH session to `master0`
 * `make tail-helper` - opens an SSH session to `master0` and tails the `swarm-helper` log
-* `make endpoints` - list DNS aliases
-* `make destroy` - destroys the entire cluster
+* `make list-endpoints` - list DNS aliases
+* `make destroy-cluster` - destroys the entire cluster
 
 ## Recommended Sequence
 
     az login
     make keys
     make params
-    make deploy
+    make deploy-cluster
     # Go to the Azure portal and check the deployment progress
     
     # now deploy the Swarm monitor UI
@@ -44,28 +46,28 @@ This was originally built as [a barebones cluster template](http://taoofmac.com/
     make endpoints
     
     # Now deploy the test service and watch as containers are loaded and run
-    make deploy-service
+    make deploy-replicated-service
     # Open the agent-lb endpoint in a browser, refresh to hit a different node (from outside Azure, Swarm is still quirky)
-    make endpoints
+    make list-endpoints
 
     # Scale the service down
     make scale-service-4
     
     # Now scale the VM scale set and watch as new VMs join the cluster
-    make scale-7
+    make scale-vmss-7
     # Add more service workers, and watch them spread through the cluster
     make scale-service-16
     
     # Now scale down the VM scale set and watch Swarm coping by re-scheduling workers
-    make scale-3
+    make scale-vmss-3
      
     # Stop (but not de-allocate) worker VMs and watch all containers move to the master (because we have no scheduling rules)
-    make stop
+    make stop-vmss
     # Now re-start them
-    make start
+    make start-vmss
     
     # Clean up after we're done working
-    make destroy
+    make destroy-cluster
 
 
 ## Requirements
