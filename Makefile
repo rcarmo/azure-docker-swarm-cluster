@@ -53,15 +53,19 @@ kill-monitor:
 	ssh -i cluster.pem cluster@$(MASTER_FQDN) \
 	"docker ps | grep manomarks/visualizer | cut -d\  -f 1 | xargs docker kill"
 
-# Deploy the demo service
+# Deploy the replicated service
 deploy-replicated-service:
 	ssh -i cluster.pem cluster@$(MASTER_FQDN) \
-	docker service create --name replicated --replicas=8 --publish 80:8000 rcarmo/demo-frontend-stateless
+	docker service create --name replicated --publish 80:8000 \
+	--replicas=8 --env SWARM_MODE="REPLICATED" --env SWARM_PUBLIC_PORT=80\
+	rcarmo/demo-frontend-stateless
 
-# Deploy the demo service
+# Deploy the global service
 deploy-global-service:
 	ssh -i cluster.pem cluster@$(MASTER_FQDN) \
-	docker service create --name global --publish 81:8000 --mode global rcarmo/demo-frontend-stateless
+	docker service create --name global --publish 81:8000 \
+	--mode global --env SWARM_MODE="GLOBAL" --env SWARM_PUBLIC_PORT=81 \
+	rcarmo/demo-frontend-stateless
 
 # Scale the demo service
 scale-service-%:
