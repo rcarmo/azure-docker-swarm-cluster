@@ -1,5 +1,5 @@
 # Set environment variables (if they're not defined yet)
-export RESOURCE_GROUP?=swarm-demo
+export RESOURCE_GROUP?=swarm-jws
 export LOCATION?=northeurope
 export AZURE_CLI?=az
 export MASTER_COUNT?=1
@@ -57,7 +57,7 @@ kill-monitor:
 deploy-replicated-service:
 	ssh -i cluster.pem cluster@$(MASTER_FQDN) \
 	docker service create --name replicated --publish 80:8000 \
-	--replicas=8 --env SWARM_MODE="REPLICATED" --env SWARM_PUBLIC_PORT=80\
+	--replicas=8 --env SWARM_MODE="REPLICATED" --env SWARM_PUBLIC_PORT=80 \
 	rcarmo/demo-frontend-stateless
 
 # Deploy the global service
