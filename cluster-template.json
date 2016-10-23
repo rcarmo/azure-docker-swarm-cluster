@@ -486,6 +486,25 @@
                 "id": "[concat(resourceId('Microsoft.Network/loadBalancers',parameters('agentPrefix')),'/probes/tcpProbe')]"
               }
             }
+          },
+          {
+            "name": "alternateHttpRule",
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers',parameters('agentPrefix')),'/frontendIPConfigurations/loadBalancerFrontEnd')]"
+              },
+              "backendAddressPool": {
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers',parameters('agentPrefix')),'/backendAddressPools/agentPool')]"
+              },
+              "protocol": "Tcp",
+              "frontendPort": 81,
+              "backendPort": 81,
+              "enableFloatingIP": false,
+              "idleTimeoutInMinutes": 5,
+              "probe": {
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers',parameters('agentPrefix')),'/probes/tcpProbe')]"
+              }
+            }
           }
         ],
         "probes": [
@@ -493,9 +512,9 @@
             "name": "tcpProbe",
             "properties": {
               "protocol": "Tcp",
-              "port": 80,
+              "port": 22,
               "intervalInSeconds": 10,
-              "numberOfProbes": 2
+              "numberOfProbes": 10
             }
           }
         ]
@@ -532,6 +551,19 @@
               "sourceAddressPrefix": "*",
               "protocol": "Tcp",
               "destinationPortRange": "80",
+              "access": "Allow",
+              "direction": "Inbound",
+              "sourcePortRange": "*",
+              "destinationAddressPrefix": "*"
+            }
+          },
+          {
+            "name": "default-allow-alternate-http",
+            "properties": {
+              "priority": 1001,
+              "sourceAddressPrefix": "*",
+              "protocol": "Tcp",
+              "destinationPortRange": "81",
               "access": "Allow",
               "direction": "Inbound",
               "sourcePortRange": "*",
