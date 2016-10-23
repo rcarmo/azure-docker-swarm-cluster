@@ -560,7 +560,7 @@
           {
             "name": "default-allow-alternate-http",
             "properties": {
-              "priority": 1001,
+              "priority": 1002,
               "sourceAddressPrefix": "*",
               "protocol": "Tcp",
               "destinationPortRange": "81",
@@ -573,7 +573,7 @@
           {
             "name": "default-allow-https",
             "properties": {
-              "priority": 1002,
+              "priority": 1003,
               "sourceAddressPrefix": "*",
               "protocol": "Tcp",
               "destinationPortRange": "443",
@@ -586,7 +586,7 @@
           {
             "name": "default-allow-managment-http",
             "properties": {
-              "priority": 1003,
+              "priority": 1004,
               "sourceAddressPrefix": "*",
               "protocol": "Tcp",
               "destinationPortRange": "8080",
