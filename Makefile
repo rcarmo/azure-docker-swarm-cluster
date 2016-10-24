@@ -70,7 +70,7 @@ deploy-global-service:
 # Scale the demo service
 scale-service-%:
 	ssh -i cluster.pem cluster@$(MASTER_FQDN) \
-	docker service scale replcated=$*
+	docker service scale replicated=$*
 
 # Update the service (rebalancing doesn't work yet)
 update-service:
