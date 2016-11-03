@@ -1,6 +1,8 @@
 # azure-docker-swarm-cluster
 
-A dynamically resizable Docker Swarm cluster for Azure
+A dynamically resizable Docker Swarm cluster for Azure:
+
+<iframe src="https://livestream.com/accounts/16154575/events/6354092/player?width=560&amp;height=315&amp;autoPlay=true&amp;mute=false" frameborder="0" scrolling="auto" allowfullscreen="" width="560" height="315" allowtransparency="true"></iframe>
 
 ## What
 
