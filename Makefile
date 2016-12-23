@@ -12,7 +12,7 @@ PARAMETER_FILES := parameters-masters.json parameters-agents.json
 
 # dump resource groups
 resources:
-	$(AZURE_CLI) resource group list --output table
+	$(AZURE_CLI) group list --output table
 
 # Dump list of location IDs
 locations:
@@ -31,13 +31,13 @@ params: $(SSH_KEY_FILES) cloud-config-master.yml cloud-config-agent.yml
 
 # Destroy the entire resource group and all cluster resources
 destroy-cluster:
-	$(AZURE_CLI) resource group delete --name $(RESOURCE_GROUP)
+	$(AZURE_CLI) group delete --name $(RESOURCE_GROUP)
 
 
 # Create a resource group and deploy the cluster resources inside it
 deploy-cluster:
-	-$(AZURE_CLI) resource group create --name $(RESOURCE_GROUP) --location $(LOCATION) --output table 
-	$(AZURE_CLI) resource group deployment create --template-file-path cluster-template.json --parameters-file-path parameters.json --resource-group $(RESOURCE_GROUP) --name cli-deployment-$(LOCATION) --output table
+	-$(AZURE_CLI) group create --name $(RESOURCE_GROUP) --location $(LOCATION) --output table 
+	$(AZURE_CLI) group deployment create --template-file cluster-template.json --parameters @parameters.json --resource-group $(RESOURCE_GROUP) --name cli-deployment-$(LOCATION) --output table
 
 # Cleanup parameters
 clean:
