@@ -1,7 +1,6 @@
 # Set environment variables (if they're not defined yet)
 export RESOURCE_GROUP?=swarm-demo
 export LOCATION?=northeurope
-export AZURE_CLI?=az
 export MASTER_COUNT?=1
 export AGENT_COUNT?=3
 export MASTER_FQDN=$(RESOURCE_GROUP)-master0.$(LOCATION).cloudapp.azure.com
@@ -12,11 +11,11 @@ PARAMETER_FILES := parameters-masters.json parameters-agents.json
 
 # dump resource groups
 resources:
-	$(AZURE_CLI) group list --output table
+	az group list --output table
 
 # Dump list of location IDs
 locations:
-	$(AZURE_CLI) account list-locations --output table
+	az account list-locations --output table
 
 # Generate SSH keys for the cluster
 keys:
@@ -31,13 +30,13 @@ params: $(SSH_KEY_FILES) cloud-config-master.yml cloud-config-agent.yml
 
 # Destroy the entire resource group and all cluster resources
 destroy-cluster:
-	$(AZURE_CLI) group delete --name $(RESOURCE_GROUP)
+	az group delete --name $(RESOURCE_GROUP)
 
 
 # Create a resource group and deploy the cluster resources inside it
 deploy-cluster:
-	-$(AZURE_CLI) group create --name $(RESOURCE_GROUP) --location $(LOCATION) --output table 
-	$(AZURE_CLI) group deployment create --template-file cluster-template.json --parameters @parameters.json --resource-group $(RESOURCE_GROUP) --name cli-deployment-$(LOCATION) --output table
+	-az group create --name $(RESOURCE_GROUP) --location $(LOCATION) --output table 
+	az group deployment create --template-file cluster-template.json --parameters @parameters.json --resource-group $(RESOURCE_GROUP) --name cli-deployment-$(LOCATION) --output table
 
 # Cleanup parameters
 clean:
@@ -87,20 +86,20 @@ tail-helper:
 
 # List VMSS instances
 list-vmss:
-	$(AZURE_CLI) vmss list-instances --resource-group $(RESOURCE_GROUP) --name $(VMSS_NAME) --output table 
+	az vmss list-instances --resource-group $(RESOURCE_GROUP) --name $(VMSS_NAME) --output table 
 
 # Scale VMSS instances
 scale-vmss-%:
-	$(AZURE_CLI) vmss scale --resource-group $(RESOURCE_GROUP) --name $(VMSS_NAME) --new-capacity $* --output table 
+	az vmss scale --resource-group $(RESOURCE_GROUP) --name $(VMSS_NAME) --new-capacity $* --output table 
 
 # Stop all VMSS instances
 stop-vmss:
-	$(AZURE_CLI) vmss stop --resource-group $(RESOURCE_GROUP) --name $(VMSS_NAME) --output table 
+	az vmss stop --resource-group $(RESOURCE_GROUP) --name $(VMSS_NAME) --output table 
 
 # Start all VMSS instances
 start-vmss:
-	$(AZURE_CLI) vmss start --resource-group $(RESOURCE_GROUP) --name $(VMSS_NAME) --output table 
+	az vmss start --resource-group $(RESOURCE_GROUP) --name $(VMSS_NAME) --output table 
 
 # List endpoints
 list-endpoints:
-	$(AZURE_CLI) network public-ip list --query '[].{dnsSettings:dnsSettings.fqdn}' --resource-group $(RESOURCE_GROUP) --output table
+	az network public-ip list --query '[].{dnsSettings:dnsSettings.fqdn}' --resource-group $(RESOURCE_GROUP) --output table
