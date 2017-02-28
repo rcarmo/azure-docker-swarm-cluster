@@ -75,7 +75,7 @@ This was originally built as [a barebones cluster template](http://taoofmac.com/
 ## Requirements
 
 * [Python][p]
-* The new [Azure CLI](https://github.com/Azure/azure-cli) (`pip install -U -r requirements.txt` will install it)
+* The new [Azure CLI][az] (`pip install -U -r requirements.txt` will install it)
 * (Optional) `make` (you can just read through the `Makefile` and type the commands yourself)
 * (Optional) a local Docker installation to rebuild the bundled test service (see the aptly named `test-service` folder)
 
@@ -120,4 +120,5 @@ Also, keep in mind that the load-balancer configuration does _not_ include TCP p
 
 [d]: http://docker.com
 [p]: http://python.org
-[dh]:https://hub.docker.com/r/rcarmo/demo-frontend-stateless/
+[dh]: https://hub.docker.com/r/rcarmo/demo-frontend-stateless/
+[az]: https://github.com/Azure/azure-cli
