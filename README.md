@@ -79,11 +79,10 @@ This was originally built as [a barebones cluster template](http://taoofmac.com/
 * (Optional) `make` (you can just read through the `Makefile` and type the commands yourself)
 * (Optional) a local Docker installation to rebuild the bundled test service (see the aptly named `test-service` folder)
 
-## Development History
+## Changelog
 
-This was originally much more reliant on [Python][p], since the scripts used to provision the Swarm cluster were taken out of another application to save time.
-
-However, and since [az](https://github.com/Azure/azure-cli) is now generally available, and in order to be able to use this project as a teaching aid that an unexperienced person could read through and understand in one sitting, things were simplified a bit more.
+* 2017-02-28: Updated (and simplified) the template to support managed disks, added CPU-based autoscaling.
+* Previously: Moved from `xplat-cli` to [Azure CLI][az], removed extraneous [Python][p] helpers.
 
 ## Internals
 
@@ -109,7 +108,7 @@ There are several things that can be done to improve upon this:
 * Strengthen the token exchange mechanism (adding SSL and/or a shared `nonce` to the registration/draining URLs is left as an exercise to the reader)
 * Find ways to nudge Swarm into re-balancing the load between nodes (there are already multiple approaches for this in the [Docker][d] issue list - (re)tagging might be the simplest)
 * Stop instances and leave their resources allocated instead of destroying them completely upon rescaling, for faster scale-ups
-* Turn on CPU-based auto-scaling in Azure (again, it's off largely because this is simpler to understand)
+* <strike>Turn on CPU-based auto-scaling in Azure (again, it's off largely because this is simpler to understand)</strike>
 
 ## Disclaimers
 
