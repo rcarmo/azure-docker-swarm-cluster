@@ -38,7 +38,7 @@
     },
     "agentPrefix": {
       "type": "string",
-      "defaultValue": "agent"
+      "defaultValue": "agents"
     },
     "agentCount": {
       "type": "int",
@@ -113,19 +113,19 @@
         "Standard_LRS",
         "Premium_LRS"
       ]
+    },
+    "diskSizeGB": {
+      "type": "int",
+      "defaultValue": 20,
+      "allowedValues": [
+        20,
+        50,
+        100
+      ]
     }
   },
   "variables": {
     "diagsName": "[toLower(substring(concat(parameters('masterPrefix'), 'diag',  uniqueString(resourceGroup().id)), 0, 11))]",
-    "saName": "[toLower(substring(concat(parameters('masterPrefix'), 'sa',  uniqueString(resourceGroup().id)), 0, 11))]",
-    "saCount": 5,
-    "saNameArray": [
-      "[concat(toLower(substring(concat(parameters('agentPrefix'), 'sa',  uniqueString(resourceGroup().id)), 0, 11)), '0')]",
-      "[concat(toLower(substring(concat(parameters('agentPrefix'), 'sa',  uniqueString(resourceGroup().id)), 0, 11)), '1')]",
-      "[concat(toLower(substring(concat(parameters('agentPrefix'), 'sa',  uniqueString(resourceGroup().id)), 0, 11)), '2')]",
-      "[concat(toLower(substring(concat(parameters('agentPrefix'), 'sa',  uniqueString(resourceGroup().id)), 0, 11)), '3')]",
-      "[concat(toLower(substring(concat(parameters('agentPrefix'), 'sa',  uniqueString(resourceGroup().id)), 0, 11)), '4')]"
-    ],
     "natStartPort": 50000,
     "natEndPort": 50099,
     "natBackendPort": 22
@@ -141,28 +141,7 @@
       }
     },
     {
-      "type": "Microsoft.Storage/storageAccounts",
-      "name": "[variables('saName')]",
-      "apiVersion": "2015-06-15",
-      "location": "[resourceGroup().location]",
-      "properties": {
-        "accountType": "[parameters('saType')]"
-      }
-    },
-    {
-      "type": "Microsoft.Storage/storageAccounts",
-      "name": "[variables('saNameArray')[copyIndex()]]",
-      "location": "[resourceGroup().location]",
-      "apiVersion": "2015-06-15",
-      "copy": {
-        "name": "storageLoop",
-        "count": "[variables('saCount')]"
-      },
-      "properties": {
-        "accountType": "[parameters('saType')]"
-      }
-    },
-    {
+      "comments": "Virtual Network",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "cluster",
       "apiVersion": "2015-06-15",
@@ -190,13 +169,14 @@
       }
     },
     {
+      "comments": "Master Node(s)",
       "type": "Microsoft.Compute/virtualMachines",
       "copy": {
         "name": "masters",
         "count": "[parameters('masterCount')]"
       },
       "name": "[concat(parameters('masterPrefix'),copyIndex())]",
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2016-04-30-preview",
       "location": "[resourceGroup().location]",
       "properties": {
         "osProfile": {
@@ -227,11 +207,12 @@
           },
           "osDisk": {
             "name": "[concat(parameters('masterPrefix'),copyIndex())]",
-            "vhd": {
-              "uri": "[concat('https', '://', variables('saName'), '.blob.core.windows.net', concat('/vhds/', 'osdisk', copyIndex(),'.vhd'))]"
+            "managedDisk": {
+              "storageAccountType": "[parameters('saType')]"
             },
             "caching": "ReadWrite",
-            "createOption": "FromImage"
+            "createOption": "FromImage",
+            "diskSizeGB": "[parameters('diskSizeGB')]"
           },
           "dataDisks": []
         },
@@ -255,17 +236,16 @@
       "dependsOn": [
         "[concat('Microsoft.Network/networkInterfaces/', parameters('masterPrefix'), copyIndex())]",
         "[concat('Microsoft.Compute/availabilitySets/', 'masters')]",
-        "[concat('Microsoft.Storage/storageAccounts/', variables('saName'))]",
         "[concat('Microsoft.Storage/storageAccounts/', variables('diagsName'))]"
       ]
     },
     {
+      "comments": "Agent ScaleSet",
       "type": "Microsoft.Compute/virtualMachineScaleSets",
       "name": "[parameters('agentPrefix')]",
       "location": "[resourceGroup().location]",
-      "apiVersion": "2016-03-30",
+      "apiVersion": "2016-04-30-preview",
       "dependsOn": [
-        "storageLoop",
         "[concat('Microsoft.Network/loadBalancers/', parameters('agentPrefix'))]",
         "[concat('Microsoft.Storage/storageAccounts/', variables('diagsName'))]"
       ],
@@ -298,16 +278,12 @@
           },
           "storageProfile": {
             "osDisk": {
-              "vhdContainers": [
-                "[concat('https://', variables('saNameArray')[0], '.blob.core.windows.net/', 'vhds')]",
-                "[concat('https://', variables('saNameArray')[1], '.blob.core.windows.net/', 'vhds')]",
-                "[concat('https://', variables('saNameArray')[2], '.blob.core.windows.net/', 'vhds')]",
-                "[concat('https://', variables('saNameArray')[3], '.blob.core.windows.net/', 'vhds')]",
-                "[concat('https://', variables('saNameArray')[4], '.blob.core.windows.net/', 'vhds')]"
-              ],
-              "name": "osdisk.vhd",
+              "managedDisk": {
+                "storageAccountType": "[parameters('saType')]"
+              },
               "caching": "ReadWrite",
-              "createOption": "FromImage"
+              "createOption": "FromImage",
+              "diskSizeGB": "[parameters('diskSizeGB')]"
             },
             "imageReference": {
               "publisher": "Canonical",
@@ -356,11 +332,78 @@
       }
     },
     {
-      "type": "Microsoft.Compute/availabilitySets",
-      "name": "masters",
-      "apiVersion": "2015-06-15",
+      "comments": "Autoscale Settings",
+      "type": "microsoft.insights/autoscalesettings",
+      "name": "[parameters('agentPrefix')]",
+      "apiVersion": "2014-04-01",
       "location": "[resourceGroup().location]",
       "properties": {
+        "profiles": [
+          {
+            "name": "DefaultProfile",
+            "capacity": {
+              "minimum": "1",
+              "maximum": "10",
+              "default": "1"
+            },
+            "rules": [
+              {
+                "metricTrigger": {
+                  "metricName": "Percentage CPU",
+                  "metricNamespace": "",
+                  "metricResourceUri": "[resourceId('Microsoft.Compute/virtualMachineScaleSets', parameters('agentPrefix'))]",
+                  "timeGrain": "PT1M",
+                  "statistic": "Average",
+                  "timeWindow": "PT5M",
+                  "timeAggregation": "Average",
+                  "operator": "GreaterThan",
+                  "threshold": 75
+                },
+                "scaleAction": {
+                  "direction": "Increase",
+                  "type": "ChangeCount",
+                  "value": "1",
+                  "cooldown": "PT1M"
+                }
+              },
+              {
+                "metricTrigger": {
+                  "metricName": "Percentage CPU",
+                  "metricNamespace": "",
+                  "metricResourceUri": "[resourceId('Microsoft.Compute/virtualMachineScaleSets', parameters('agentPrefix'))]",
+                  "timeGrain": "PT1M",
+                  "statistic": "Average",
+                  "timeWindow": "PT5M",
+                  "timeAggregation": "Average",
+                  "operator": "LessThan",
+                  "threshold": 25
+                },
+                "scaleAction": {
+                  "direction": "Decrease",
+                  "type": "ChangeCount",
+                  "value": "1",
+                  "cooldown": "PT1M"
+                }
+              }
+            ]
+          }
+        ],
+        "enabled": true,
+        "name": "[parameters('agentPrefix')]",
+        "targetResourceUri": "[resourceId('Microsoft.Compute/virtualMachineScaleSets', parameters('agentPrefix'))]"
+      },
+      "resources": [],
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachineScaleSets', parameters('agentPrefix'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Compute/availabilitySets",
+      "name": "masters",
+      "apiVersion": "2016-04-30-preview",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "managed": "true",
         "platformFaultDomainCount": "[parameters('asFDCount')]",
         "platformUpdateDomainCount": "[parameters('asUDCount')]"
       }
