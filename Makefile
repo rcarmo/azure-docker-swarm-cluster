@@ -4,7 +4,7 @@ export LOCATION?=northeurope
 export MASTER_COUNT?=1
 export AGENT_COUNT?=3
 export MASTER_FQDN=$(RESOURCE_GROUP)-master0.$(LOCATION).cloudapp.azure.com
-export VMSS_NAME=agent
+export VMSS_NAME=agents
 
 SSH_KEY_FILES := cluster.pem cluster.pub
 PARAMETER_FILES := parameters-masters.json parameters-agents.json
@@ -78,7 +78,11 @@ update-service:
 
 # SSH to master node
 ssh-master:
-	ssh -A -i cluster.pem cluster@$(MASTER_FQDN)
+	ssh -A -i cluster.pem cluster@$(MASTER_FQDN) \
+	-L 9080:localhost:80 \
+	-L 9081:localhost:81 \
+	-L 8080:localhost:8080 \
+	-L 4040:localhost:4040
 
 # Show swarm helper log
 tail-helper:
