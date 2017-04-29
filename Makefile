@@ -8,8 +8,11 @@ export LOADBALANCER_FQDN=$(RESOURCE_GROUP)-agents-lb.$(LOCATION).cloudapp.azure.
 export VMSS_NAME=agents
 export ADMIN_USERNAME?=cluster
 SSH_KEY_FILES:=$(ADMIN_USERNAME).pem $(ADMIN_USERNAME).pub
+SSH_KEY:=$(ADMIN_USERNAME).pem
 TEMPLATE_FILE:=cluster-template.json
 PARAMETERS_FILE:=cluster-parameters.json
+# Do not output warnings, do not validate or add remote host keys (useful when doing successive deployments or going through the load balancer)
+SSH_TO_MASTER:=ssh -q -A -i $(SSH_KEY) $(ADMIN_USERNAME)@$(MASTER_FQDN) -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null
 
 # dump resource groups
 resources:
@@ -46,41 +49,41 @@ clean:
 
 # Deploy the Swarm monitor
 deploy-monitor:
-	ssh -i cluster.pem cluster@$(MASTER_FQDN) \
-	docker run -it -d -p 8080:8080 -e HOST=$(MASTER_FQDN) -v /var/run/docker.sock:/var/run/docker.sock manomarks/visualizer 
+	$(SSH_TO_MASTER) \
+	docker run -it -d -p 8080:8080 -e HOST=$(MASTER_FQDN) -v /var/run/docker.sock:/var/run/docker.sock dockersamples/visualizer
 
 # Kill the swarm monitor
 kill-monitor:
-	ssh -i cluster.pem cluster@$(MASTER_FQDN) \
-	"docker ps | grep manomarks/visualizer | cut -d\  -f 1 | xargs docker kill"
+	$(SSH_TO_MASTER) \
+	"docker ps | grep dockersamples/visualizer | cut -d\  -f 1 | xargs docker kill"
 
 # Deploy the replicated service
 deploy-replicated-service:
-	ssh -i cluster.pem cluster@$(MASTER_FQDN) \
+	$(SSH_TO_MASTER) \
 	docker service create --name replicated --publish 80:8000 \
 	--replicas=8 --env SWARM_MODE="REPLICATED" --env SWARM_PUBLIC_PORT=80 \
 	rcarmo/demo-frontend-stateless
 
 # Deploy the global service
 deploy-global-service:
-	ssh -i cluster.pem cluster@$(MASTER_FQDN) \
+	$(SSH_TO_MASTER) \
 	docker service create --name global --publish 81:8000 \
 	--mode global --env SWARM_MODE="GLOBAL" --env SWARM_PUBLIC_PORT=81 \
 	rcarmo/demo-frontend-stateless
 
 # Scale the demo service
 scale-service-%:
-	ssh -i cluster.pem cluster@$(MASTER_FQDN) \
+	$(SSH_TO_MASTER) \
 	docker service scale replicated=$*
 
 # Update the service (rebalancing doesn't work yet)
 update-service:
-	ssh -i cluster.pem cluster@$(MASTER_FQDN) \
+	$(SSH_TO_MASTER) \
 	docker service update replcated
 
 # SSH to master node
 proxy:
-	ssh -A -i cluster.pem cluster@$(MASTER_FQDN) \
+	$(SSH_TO_MASTER) \
 	-L 9080:localhost:80 \
 	-L 9081:localhost:81 \
 	-L 8080:localhost:8080 \
@@ -88,7 +91,13 @@ proxy:
 
 # Show swarm helper log
 tail-helper:
-	ssh -i cluster.pem cluster@$(MASTER_FQDN) sudo journalctl -f -u swarm-helper
+	$(SSH_TO_MASTER) \
+	sudo journalctl -f -u swarm-helper
+
+# View deployment details
+view-deployment-status:
+	az group deployment operation list --resource-group $(RESOURCE_GROUP) --name cli-deployment-$(LOCATION) \
+	--query "[].{OperationID:operationId,Name:properties.targetResource.resourceName,Type:properties.targetResource.resourceType,State:properties.provisioningState,Status:properties.statusCode}" --output table
 
 # List VMSS instances
 list-agents:
