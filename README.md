@@ -25,11 +25,11 @@ This was originally built as [a barebones cluster template](http://taoofmac.com/
 * `make deploy-replicated-service` - deploys a simple web service onto the Swarm cluster (8 replicas)
 * `make deploy-global-service` - deploys a simple web service onto the Swarm cluster (one container per node)
 * `make scale-service-<number>` - scales the replicated service to `<number>` instances, i.e., `make scale-service-10` will resize it (up or down) to 10 containers
-* `make list-vmss` - lists all worker VMs
-* `make scale-vmss-<number>` - scales the worker VM scale set to `<number>` instances, i.e., `make scale-10` will resize it (up or down) to 10 VMs
-* `make stop-vmss` - stops all worker VMs
-* `make start-vmss` - starts all worker VMs
-* `make ssh-master` - opens an SSH session to `master0`
+* `make list-agents` - lists all agent VMs
+* `make scale-agents-<number>` - scales the agent VM scale set to `<number>` instances, i.e., `make scale-10` will resize it (up or down) to 10 VMs
+* `make stop-agents` - stops all agents
+* `make start-agents` - starts all agents
+* `make proxy` - opens an SSH session to `master0` and sets up TCP forwarding to `localhost`
 * `make tail-helper` - opens an SSH session to `master0` and tails the `swarm-helper` log
 * `make list-endpoints` - list DNS aliases
 * `make destroy-cluster` - destroys the entire cluster
@@ -56,17 +56,17 @@ This was originally built as [a barebones cluster template](http://taoofmac.com/
     make scale-service-4
     
     # Now scale the VM scale set and watch as new VMs join the cluster
-    make scale-vmss-7
+    make scale-agents-7
     # Add more service workers, and watch them spread through the cluster
     make scale-service-16
     
     # Now scale down the VM scale set and watch Swarm coping by re-scheduling workers
-    make scale-vmss-3
+    make scale-agents-3
      
     # Stop (but not de-allocate) worker VMs and watch all containers move to the master (because we have no scheduling rules)
-    make stop-vmss
+    make stop-agents
     # Now re-start them
-    make start-vmss
+    make start-agents
     
     # Clean up after we're done working
     make destroy-cluster
@@ -81,6 +81,7 @@ This was originally built as [a barebones cluster template](http://taoofmac.com/
 
 ## Changelog
 
+* 2017-04-29: Updated `cloud-init` files to install Docker CE from new official repository, renamed Makefile targets for agents
 * 2017-02-28: Updated (and simplified) the template to support managed disks, added CPU-based autoscaling.
 * Previously: Moved from `xplat-cli` to [Azure CLI][az], removed extraneous [Python][p] helpers.
 

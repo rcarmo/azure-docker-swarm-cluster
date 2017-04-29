@@ -4,10 +4,12 @@ export LOCATION?=northeurope
 export MASTER_COUNT?=1
 export AGENT_COUNT?=3
 export MASTER_FQDN=$(RESOURCE_GROUP)-master0.$(LOCATION).cloudapp.azure.com
+export LOADBALANCER_FQDN=$(RESOURCE_GROUP)-agents-lb.$(LOCATION).cloudapp.azure.com
 export VMSS_NAME=agents
-
-SSH_KEY_FILES := cluster.pem cluster.pub
-PARAMETER_FILES := parameters-masters.json parameters-agents.json
+export ADMIN_USERNAME?=cluster
+SSH_KEY_FILES:=$(ADMIN_USERNAME).pem $(ADMIN_USERNAME).pub
+TEMPLATE_FILE:=cluster-template.json
+PARAMETERS_FILE:=cluster-parameters.json
 
 # dump resource groups
 resources:
@@ -19,13 +21,13 @@ locations:
 
 # Generate SSH keys for the cluster
 keys:
-	ssh-keygen -b 2048 -t rsa -f cluster -q -N ""
-	mv cluster cluster.pem
+	ssh-keygen -b 2048 -t rsa -f $(ADMIN_USERNAME) -q -N ""
+	mv $(ADMIN_USERNAME) $(ADMIN_USERNAME).pem
 
 
 # Generate the Azure Resource Template parameter files
-params: $(SSH_KEY_FILES) cloud-config-master.yml cloud-config-agent.yml
-	python genparams.py
+params:
+	python genparams.py $(ADMIN_USERNAME) > $(PARAMETERS_FILE)
 
 
 # Destroy the entire resource group and all cluster resources
@@ -36,11 +38,11 @@ destroy-cluster:
 # Create a resource group and deploy the cluster resources inside it
 deploy-cluster:
 	-az group create --name $(RESOURCE_GROUP) --location $(LOCATION) --output table 
-	az group deployment create --template-file cluster-template.json --parameters @parameters.json --resource-group $(RESOURCE_GROUP) --name cli-deployment-$(LOCATION) --output table
+	az group deployment create --template-file $(TEMPLATE_FILE) --parameters @$(PARAMETERS_FILE) --resource-group $(RESOURCE_GROUP) --name cli-deployment-$(LOCATION) --output table
 
 # Cleanup parameters
 clean:
-	rm -f cluster.pem cluster.pub parameters.json
+	rm -f $(SSH_KEY_FILES) $(PARAMETERS_FILE)
 
 # Deploy the Swarm monitor
 deploy-monitor:
@@ -77,7 +79,7 @@ update-service:
 	docker service update replcated
 
 # SSH to master node
-ssh-master:
+proxy:
 	ssh -A -i cluster.pem cluster@$(MASTER_FQDN) \
 	-L 9080:localhost:80 \
 	-L 9081:localhost:81 \
@@ -89,19 +91,19 @@ tail-helper:
 	ssh -i cluster.pem cluster@$(MASTER_FQDN) sudo journalctl -f -u swarm-helper
 
 # List VMSS instances
-list-vmss:
+list-agents:
 	az vmss list-instances --resource-group $(RESOURCE_GROUP) --name $(VMSS_NAME) --output table 
 
 # Scale VMSS instances
-scale-vmss-%:
+scale-agents-%:
 	az vmss scale --resource-group $(RESOURCE_GROUP) --name $(VMSS_NAME) --new-capacity $* --output table 
 
 # Stop all VMSS instances
-stop-vmss:
+stop-agents:
 	az vmss stop --resource-group $(RESOURCE_GROUP) --name $(VMSS_NAME) --output table 
 
 # Start all VMSS instances
-start-vmss:
+start-agents:
 	az vmss start --resource-group $(RESOURCE_GROUP) --name $(VMSS_NAME) --output table 
 
 # List endpoints
