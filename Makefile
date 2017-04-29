@@ -95,7 +95,7 @@ tail-helper:
 	sudo journalctl -f -u swarm-helper
 
 # View deployment details
-view-deployment-status:
+view-deployment:
 	az group deployment operation list --resource-group $(RESOURCE_GROUP) --name cli-deployment-$(LOCATION) \
 	--query "[].{OperationID:operationId,Name:properties.targetResource.resourceName,Type:properties.targetResource.resourceType,State:properties.provisioningState,Status:properties.statusCode}" --output table
 

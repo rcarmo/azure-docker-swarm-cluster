@@ -21,6 +21,7 @@ This was originally built as [a barebones cluster template](http://taoofmac.com/
 * `make keys` - generates an SSH key for provisioning
 * `make params` - generates ARM template parameters
 * `make deploy-cluster` - deploys cluster resources and pre-provisions Docker on all machines
+* `make view-deployment` - view deployment progress
 * `make deploy-monitor` - deploys a Swarm monitor container on `http://master0:8080`
 * `make deploy-replicated-service` - deploys a simple web service onto the Swarm cluster (8 replicas)
 * `make deploy-global-service` - deploys a simple web service onto the Swarm cluster (one container per node)
@@ -40,6 +41,7 @@ This was originally built as [a barebones cluster template](http://taoofmac.com/
     make keys
     make params
     make deploy-cluster
+    make view-deployment
     # Go to the Azure portal and check the deployment progress
     
     # now deploy the Swarm monitor UI
