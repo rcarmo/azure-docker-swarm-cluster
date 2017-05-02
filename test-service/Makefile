@@ -4,11 +4,14 @@ IMAGE_NAME=rcarmo/demo-frontend
 build-container:
 	docker build -t $(IMAGE_NAME) src
 
-run:
+daemon:
 	docker run -d -p 8000:8000 -e DEMO_SETTING="my app setting" $(IMAGE_NAME)
 
+run:
+	docker run -p 8000:8000 -e DEMO_SETTING="my app setting" $(IMAGE_NAME)
+
 rmi:
-	docker rmi -f $(IMAGE_NAME)
+	-docker rmi -f $(IMAGE_NAME)
 
 shell:
 	docker run -p 8000:8000 -e DEMO_SETTING="my app setting" -ti $(IMAGE_NAME)
@@ -16,10 +19,10 @@ shell:
 push:
 	docker push $(IMAGE_NAME)
 
-clean-all-images:
-	#docker stop $(docker ps -a -q)
-	#docker rm $(docker ps -a -q)
-	docker rmi $(docker images -a -q)
+clean: rmi
+	-docker rm -v $$(docker ps -a -q -f status=exited)
+	-docker rmi $$(docker images -q -f dangling=true)
+
 
 test:
 	curl -v http://localhost:$(PORT)/{hostname,count} -w "\n"
