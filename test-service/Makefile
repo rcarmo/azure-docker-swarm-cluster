@@ -14,7 +14,7 @@ rmi:
 	-docker rmi -f $(IMAGE_NAME)
 
 shell:
-	docker run -p 8000:8000 -e DEMO_SETTING="my app setting" -ti $(IMAGE_NAME)
+	docker run -p 8000:8000 -e DEMO_SETTING="my app setting" -ti $(IMAGE_NAME) /bin/bash
 
 push:
 	docker push $(IMAGE_NAME)

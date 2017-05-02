@@ -22,7 +22,7 @@
 	</header>
 	<div class="row">
 		<div class="col-12">
-			<h1>Stateless Demo App</h1>
+			<h1>${heading}</h1>
 			<hr>
 			<p>This is a small stateless webapp for demoing load balancing. While each instance maintains a request count to demonstrate load sharing among instances, the count is not preserved if the app is restarted.</p>
             <h3>Endpoints</h3>

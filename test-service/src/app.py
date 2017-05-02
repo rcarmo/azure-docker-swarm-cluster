@@ -61,10 +61,13 @@ async def homepage(req):
     global request_count
     request_count = request_count + 1
     shared_count = 0
+    heading = "Stateless Front-End"
     if redis:
         await redis.inc(shared_counter)
         shared_count = int(await redis.get(shared_counter))
+        heading = "Shared State Front-End"
     return html(layout.render(request=req,
+                              heading=heading,
                               hostname=gethostname(),
                               requests=request_count,
                               shared_count=shared_count,
@@ -152,6 +155,6 @@ async def init_connections(sanic, loop):
 
 if __name__ == '__main__':
     log.debug("Beginning run.")
-    HTTP_PORT = environ.get('PORT', 8000)
+    HTTP_PORT = int(environ.get('PORT', 8000))
     DEBUG = 'true' == environ.get('DEBUG', 'false').lower()
     app.run(host='0.0.0.0', port=HTTP_PORT, workers=cpu_count(), debug=DEBUG)
