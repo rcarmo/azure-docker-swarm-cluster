@@ -1,0 +1,20 @@
+haproxy:
+  image: dockercloud/haproxy
+  autorestart: always
+  links:
+    - web
+  ports:
+    - "80:80"
+  roles:
+    - global
+web:
+  image: rcarmo/demo-frontend
+  autorestart: always
+  links:
+    - redis
+  target_num_containers: 4
+  environment:
+    - REDIS_SERVER=redis
+redis:
+  image: redis
+  autorestart: always
