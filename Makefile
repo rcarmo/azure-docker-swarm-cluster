@@ -62,14 +62,14 @@ deploy-replicated-service:
 	$(SSH_TO_MASTER) \
 	docker service create --name replicated --publish 80:8000 \
 	--replicas=8 --env SWARM_MODE="REPLICATED" --env SWARM_PUBLIC_PORT=80 \
-	rcarmo/demo-frontend-stateless
+	rcarmo/demo-frontend
 
 # Deploy the global service
 deploy-global-service:
 	$(SSH_TO_MASTER) \
 	docker service create --name global --publish 81:8000 \
 	--mode global --env SWARM_MODE="GLOBAL" --env SWARM_PUBLIC_PORT=81 \
-	rcarmo/demo-frontend-stateless
+	rcarmo/demo-frontend
 
 # Scale the demo service
 scale-service-%:
