@@ -1,2 +1,4 @@
-aiohttp
+aioredis
+mako
+sanic
 uvloop
