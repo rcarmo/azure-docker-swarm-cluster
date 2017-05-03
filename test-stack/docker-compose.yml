@@ -14,17 +14,17 @@ services:
         deploy:
             mode: replicated
             replicas: 4
-#            placement:
-#                constraints: #[node.role==worker]
+            placement:
+                constraints: [node.role==worker]
     redis:
         image: redis:3.2-alpine
         ports:
             - "6379"
         networks:
             - backend
-#        deploy:
-#            placement:
-#                constraints: [node.role==manager]
+        deploy:
+            placement:
+                constraints: [node.role==manager]
 
 networks:
     backend:
