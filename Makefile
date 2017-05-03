@@ -71,6 +71,11 @@ deploy-global-service:
 	--mode global --env SWARM_MODE="GLOBAL" --env SWARM_PUBLIC_PORT=81 \
 	rcarmo/demo-frontend
 
+# Deploy the test stack (experimental)
+deploy-stack:
+	cat test-stack/docker-compose.yml | $(SSH_TO_MASTER) \
+	docker stack deploy -c - test-stack
+
 # Scale the demo service
 scale-service-%:
 	$(SSH_TO_MASTER) \

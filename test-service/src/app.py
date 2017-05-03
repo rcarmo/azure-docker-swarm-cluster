@@ -63,7 +63,7 @@ async def homepage(req):
     shared_count = 0
     heading = "Stateless Front-End"
     if redis:
-        await redis.inc(shared_counter)
+        await redis.incr(shared_counter)
         shared_count = int(await redis.get(shared_counter))
         heading = "Shared State Front-End"
     return html(layout.render(request=req,
@@ -79,7 +79,7 @@ async def get_name(req):
     global request_count
     request_count = request_count + 1
     if redis:
-        await redis.inc(shared_counter)
+        await redis.incr(shared_counter)
     return text(gethostname())
 
 @app.route('/count')
