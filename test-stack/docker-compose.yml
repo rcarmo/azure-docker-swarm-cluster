@@ -10,7 +10,7 @@ services:
             - redis
         environment:
             - REDIS_SERVER=redis
-            - DEBUG=True
+            - DEBUG=False
         deploy:
             mode: replicated
             replicas: 4
