@@ -84,7 +84,7 @@ scale-service-%:
 # Update the service (rebalancing doesn't work yet)
 update-service:
 	$(SSH_TO_MASTER) \
-	docker service update replcated
+	docker service update replicated
 
 # SSH to master node
 proxy:
