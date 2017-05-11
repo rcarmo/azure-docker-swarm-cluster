@@ -344,7 +344,7 @@
             "capacity": {
               "minimum": "1",
               "maximum": "10",
-              "default": "1"
+              "default": "2"
             },
             "rules": [
               {
@@ -357,7 +357,7 @@
                   "timeWindow": "PT5M",
                   "timeAggregation": "Average",
                   "operator": "GreaterThan",
-                  "threshold": 75
+                  "threshold": 50
                 },
                 "scaleAction": {
                   "direction": "Increase",
@@ -376,7 +376,7 @@
                   "timeWindow": "PT5M",
                   "timeAggregation": "Average",
                   "operator": "LessThan",
-                  "threshold": 25
+                  "threshold": 50
                 },
                 "scaleAction": {
                   "direction": "Decrease",
