@@ -73,8 +73,8 @@ deploy-global-service:
 
 # Deploy the test stack (experimental)
 deploy-stack:
-	cat test-stack/docker-compose.yml | $(SSH_TO_MASTER) \
-	docker stack deploy -c - test-stack
+	cat test-stack/docker-compose.yml | $(SSH_TO_MASTER) "tee > ~/docker-compose.yml"
+	$(SSH_TO_MASTER) "docker stack deploy -c ~/docker-compose.yml test-stack"
 
 # Scale the demo service
 scale-service-%:
