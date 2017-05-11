@@ -128,6 +128,8 @@ reimage-agents-serial:
 	az vmss list-instances --resource-group $(RESOURCE_GROUP) --name $(VMSS_NAME) --query [].instanceId --output tsv \
 | xargs -I{} az vmss reimage --resource-group $(RESOURCE_GROUP) --name $(VMSS_NAME) --instance-id {} --output table
 
+chaos-monkey: reimage-agents-serial
+
 # List endpoints
 list-endpoints:
 	az network public-ip list --query '[].{dnsSettings:dnsSettings.fqdn}' --resource-group $(RESOURCE_GROUP) --output table
