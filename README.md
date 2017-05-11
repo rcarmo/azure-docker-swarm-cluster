@@ -26,10 +26,14 @@ This was originally built as [a barebones cluster template](http://taoofmac.com/
 * `make deploy-replicated-service` - deploys a simple web service onto the Swarm cluster (8 replicas)
 * `make deploy-global-service` - deploys a simple web service onto the Swarm cluster (one container per node)
 * `make scale-service-<number>` - scales the replicated service to `<number>` instances, i.e., `make scale-service-10` will resize it (up or down) to 10 containers
+* `make deploy-stack` - deploys a simple Redis-backed stateful stack onto the Swarm cluster 
 * `make list-agents` - lists all agent VMs
 * `make scale-agents-<number>` - scales the agent VM scale set to `<number>` instances, i.e., `make scale-10` will resize it (up or down) to 10 VMs
 * `make stop-agents` - stops all agents
 * `make start-agents` - starts all agents
+* `make reimage-agents-parallel` - nukes and paves all agents
+* `make reimage-agents-serial` - reimages all agents in sequence
+* `make chaos-monkey` - reimages all agents in random order
 * `make proxy` - opens an SSH session to `master0` and sets up TCP forwarding to `localhost`
 * `make tail-helper` - opens an SSH session to `master0` and tails the `swarm-helper` log
 * `make list-endpoints` - list DNS aliases
@@ -83,6 +87,7 @@ This was originally built as [a barebones cluster template](http://taoofmac.com/
 
 ## Changelog
 
+* 2017-05-11: New ways to stress test the cluster, new stack for deployment
 * 2017-04-29: Updated `cloud-init` files to install Docker CE from new official repository, renamed Makefile targets for agents
 * 2017-02-28: Updated (and simplified) the template to support managed disks, added CPU-based autoscaling.
 * Previously: Moved from `xplat-cli` to [Azure CLI][az], removed extraneous [Python][p] helpers.
@@ -107,6 +112,7 @@ If instantiation speed is a concern, this can be done once for each role and bak
 
 There are several things that can be done to improve upon this:
 
+* Use the instance metadata endpoint at http://169.254.169.254 to assess instance state
 * Ensure this works with multiple masters (cursory testing suggests it works just fine, although it can be fiddly for agents to re-try connecting to up to 5 possible masters, etc.)
 * Strengthen the token exchange mechanism (adding SSL and/or a shared `nonce` to the registration/draining URLs is left as an exercise to the reader)
 * Find ways to nudge Swarm into re-balancing the load between nodes (there are already multiple approaches for this in the [Docker][d] issue list - (re)tagging might be the simplest)
