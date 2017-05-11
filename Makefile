@@ -128,7 +128,10 @@ reimage-agents-serial:
 	az vmss list-instances --resource-group $(RESOURCE_GROUP) --name $(VMSS_NAME) --query [].instanceId --output tsv \
 | xargs -I{} az vmss reimage --resource-group $(RESOURCE_GROUP) --name $(VMSS_NAME) --instance-id {} --output table
 
-chaos-monkey: reimage-agents-serial
+chaos-monkey:
+	az vmss list-instances --resource-group $(RESOURCE_GROUP) --name $(VMSS_NAME) --query [].instanceId --output tsv | shuf \
+| xargs -I{} az vmss reimage --resource-group $(RESOURCE_GROUP) --name $(VMSS_NAME) --instance-id {} --output table
+
 
 # List endpoints
 list-endpoints:
