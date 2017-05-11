@@ -33,7 +33,7 @@ This was originally built as [a barebones cluster template](http://taoofmac.com/
 * `make start-agents` - starts all agents
 * `make reimage-agents-parallel` - nukes and paves all agents
 * `make reimage-agents-serial` - reimages all agents in sequence
-* `make chaos-monkey` - reimages all agents in random order
+* `make chaos-monkey` - restarts all agents in random order
 * `make proxy` - opens an SSH session to `master0` and sets up TCP forwarding to `localhost`
 * `make tail-helper` - opens an SSH session to `master0` and tails the `swarm-helper` log
 * `make list-endpoints` - list DNS aliases
