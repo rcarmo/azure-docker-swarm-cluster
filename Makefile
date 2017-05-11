@@ -35,13 +35,13 @@ params:
 
 # Destroy the entire resource group and all cluster resources
 destroy-cluster:
-	az group delete --name $(RESOURCE_GROUP)
+	az group delete --name $(RESOURCE_GROUP) --no-wait
 
 
 # Create a resource group and deploy the cluster resources inside it
 deploy-cluster:
 	-az group create --name $(RESOURCE_GROUP) --location $(LOCATION) --output table 
-	az group deployment create --template-file $(TEMPLATE_FILE) --parameters @$(PARAMETERS_FILE) --resource-group $(RESOURCE_GROUP) --name cli-deployment-$(LOCATION) --output table
+	az group deployment create --template-file $(TEMPLATE_FILE) --parameters @$(PARAMETERS_FILE) --resource-group $(RESOURCE_GROUP) --name cli-deployment-$(LOCATION) --output table --no-wait
 
 # Cleanup parameters
 clean:
@@ -110,19 +110,23 @@ list-agents:
 
 # Scale VMSS instances
 scale-agents-%:
-	az vmss scale --resource-group $(RESOURCE_GROUP) --name $(VMSS_NAME) --new-capacity $* --output table 
+	az vmss scale --resource-group $(RESOURCE_GROUP) --name $(VMSS_NAME) --new-capacity $* --output table --no-wait
 
 # Stop all VMSS instances
 stop-agents:
-	az vmss stop --resource-group $(RESOURCE_GROUP) --name $(VMSS_NAME) --output table 
+	az vmss stop --resource-group $(RESOURCE_GROUP) --name $(VMSS_NAME) --no-wait
 
 # Start all VMSS instances
 start-agents:
-	az vmss start --resource-group $(RESOURCE_GROUP) --name $(VMSS_NAME) --output table 
+	az vmss start --resource-group $(RESOURCE_GROUP) --name $(VMSS_NAME) --no-wait
 
 # Reimage VMSS instances
-reimage-agents:
-	az vmss reimage --resource-group $(RESOURCE_GROUP) --name $(VMSS_NAME) --output table 
+reimage-agents-parallel:
+	az vmss reimage --resource-group $(RESOURCE_GROUP) --name $(VMSS_NAME) --no-wait
+
+reimage-agents-serial:
+	az vmss list-instances --resource-group $(RESOURCE_GROUP) --name $(VMSS_NAME) --query [].instanceId --output tsv \
+| xargs -I{} az vmss reimage --resource-group $(RESOURCE_GROUP) --name $(VMSS_NAME) --instance-id {} --output table
 
 # List endpoints
 list-endpoints:
