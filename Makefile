@@ -120,6 +120,10 @@ stop-agents:
 start-agents:
 	az vmss start --resource-group $(RESOURCE_GROUP) --name $(VMSS_NAME) --output table 
 
+# Reimage VMSS instances
+reimage-agents:
+	az vmss reimage --resource-group $(RESOURCE_GROUP) --name $(VMSS_NAME) --output table 
+
 # List endpoints
 list-endpoints:
 	az network public-ip list --query '[].{dnsSettings:dnsSettings.fqdn}' --resource-group $(RESOURCE_GROUP) --output table
