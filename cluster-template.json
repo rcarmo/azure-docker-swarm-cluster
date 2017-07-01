@@ -125,7 +125,7 @@
     }
   },
   "variables": {
-    "diagsName": "[toLower(substring(concat(parameters('masterPrefix'), 'diag',  uniqueString(resourceGroup().id)), 0, 11))]",
+    "diagsName": "[toLower(substring(concat(parameters('masterPrefix'), 'diag',  uniqueString(resourceGroup().id)), 0, 16))]",
     "natStartPort": 50000,
     "natEndPort": 50099,
     "natBackendPort": 22
