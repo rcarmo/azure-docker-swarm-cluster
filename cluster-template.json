@@ -116,11 +116,11 @@
     },
     "diskSizeGB": {
       "type": "int",
-      "defaultValue": 20,
+      "defaultValue": 32,
       "allowedValues": [
-        20,
-        50,
-        100
+        32,
+        64,
+        128
       ]
     }
   },

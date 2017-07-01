@@ -40,10 +40,10 @@ params = {
         "value": b64encode(open("cloud-config-agent.yml", "r").read())
     },
     "masterSize": {
-        "value": "Standard_DS1_v2"
+        "value": "Standard_F2"
     },
     "agentSize": {
-        "value": "Standard_DS1_v2"
+        "value": "Standard_F2"
     },
     "saType": {
         "value": "Standard_LRS"

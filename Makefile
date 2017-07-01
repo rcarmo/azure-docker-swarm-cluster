@@ -1,6 +1,6 @@
 # Set environment variables (if they're not defined yet)
-export RESOURCE_GROUP?=swarm-demo
-export LOCATION?=northeurope
+export RESOURCE_GROUP?=swarm-cluster
+export LOCATION?=eastus
 export MASTER_COUNT?=1
 export AGENT_COUNT?=3
 export MASTER_FQDN=$(RESOURCE_GROUP)-master0.$(LOCATION).cloudapp.azure.com
