@@ -31,13 +31,13 @@ params = {
         "value": int(environ.get('MASTER_COUNT', 1))
     },
     "masterCustomData": {
-        "value": b64encode(open("cloud-config-master.yml", "r").read())
+        "value": b64encode(open("cloud-config/master.yml", "r").read())
     },
     "agentCount": {
         "value": int(environ.get('AGENT_COUNT', 2))
     },
     "agentCustomData": {
-        "value": b64encode(open("cloud-config-agent.yml", "r").read())
+        "value": b64encode(open("cloud-config/agent.yml", "r").read())
     },
     "masterSize": {
         "value": "Standard_F2"

@@ -7,12 +7,12 @@ export MASTER_FQDN=$(RESOURCE_GROUP)-master0.$(LOCATION).cloudapp.azure.com
 export LOADBALANCER_FQDN=$(RESOURCE_GROUP)-agents-lb.$(LOCATION).cloudapp.azure.com
 export VMSS_NAME=agents
 export ADMIN_USERNAME?=cluster
+export TIMESTAMP=`date "+%Y-%m-%d-%H-%M-%S"`
+
 SSH_KEY_FILES:=$(ADMIN_USERNAME).pem $(ADMIN_USERNAME).pub
 SSH_KEY:=$(ADMIN_USERNAME).pem
-TEMPLATE_FILE:=cluster-template.json
-PARAMETERS_FILE:=cluster-parameters.json
 # Do not output warnings, do not validate or add remote host keys (useful when doing successive deployments or going through the load balancer)
-SSH_TO_MASTER:=ssh -q -A -i $(SSH_KEY) $(ADMIN_USERNAME)@$(MASTER_FQDN) -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null
+SSH_TO_MASTER:=ssh -q -A -i keys/$(SSH_KEY) $(ADMIN_USERNAME)@$(MASTER_FQDN) -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null
 
 # dump resource groups
 resources:
@@ -24,33 +24,46 @@ locations:
 
 # Generate SSH keys for the cluster
 keys:
-	ssh-keygen -b 2048 -t rsa -f $(ADMIN_USERNAME) -q -N ""
-	mv $(ADMIN_USERNAME) $(ADMIN_USERNAME).pem
+	-mkdir keys
+	ssh-keygen -b 2048 -t rsa -f keys/$(ADMIN_USERNAME) -q -N ""
+	mv keys/$(ADMIN_USERNAME) keys/$(ADMIN_USERNAME).pem
 
 
 # Generate the Azure Resource Template parameter files
 params:
+	-mkdir parameters
 	python genparams.py $(ADMIN_USERNAME) > $(PARAMETERS_FILE)
 
 
 # Destroy the entire resource group and all cluster resources
 destroy-cluster:
-	az group delete --name $(RESOURCE_GROUP) --no-wait
+	az group delete \
+		--name $(RESOURCE_GROUP) \
+		--no-wait
 
 
 # Create a resource group and deploy the cluster resources inside it
 deploy-cluster:
 	-az group create --name $(RESOURCE_GROUP) --location $(LOCATION) --output table 
-	az group deployment create --template-file $(TEMPLATE_FILE) --parameters @$(PARAMETERS_FILE) --resource-group $(RESOURCE_GROUP) --name cli-deployment-$(LOCATION) --output table --no-wait
+	az group deployment create \
+		--template-file templates/cluster.json \
+		--parameters @parameters/cluster.json \
+		--resource-group $(RESOURCE_GROUP) \
+		--name cli-$(LOCATION)-$(TIMESTAMP) \
+		--output table \
+		--no-wait
 
 # Cleanup parameters
 clean:
-	rm -f $(SSH_KEY_FILES) $(PARAMETERS_FILE)
+	rm -rf parameters
 
 # Deploy the Swarm monitor
 deploy-monitor:
 	$(SSH_TO_MASTER) \
-	docker run -it -d -p 8080:8080 -e HOST=$(MASTER_FQDN) -v /var/run/docker.sock:/var/run/docker.sock dockersamples/visualizer
+	docker run -it -d -p 8080:8080 \
+		-e HOST=$(MASTER_FQDN) \
+		-v /var/run/docker.sock:/var/run/docker.sock \
+		dockersamples/visualizer
 
 # Kill the swarm monitor
 kill-monitor:
@@ -60,16 +73,24 @@ kill-monitor:
 # Deploy the replicated service
 deploy-replicated-service:
 	$(SSH_TO_MASTER) \
-	docker service create --name replicated --publish 80:8000 \
-	--replicas=8 --env SWARM_MODE="REPLICATED" --env SWARM_PUBLIC_PORT=80 \
-	rcarmo/demo-frontend
+	docker service create \
+		--name replicated \
+		--publish 80:8000 \
+		--replicas=8 \
+		--env SWARM_MODE="REPLICATED" \
+		--env SWARM_PUBLIC_PORT=80 \
+		rcarmo/demo-frontend
 
 # Deploy the global service
 deploy-global-service:
 	$(SSH_TO_MASTER) \
-	docker service create --name global --publish 81:8000 \
-	--mode global --env SWARM_MODE="GLOBAL" --env SWARM_PUBLIC_PORT=81 \
-	rcarmo/demo-frontend
+	docker service create \
+		--name global \
+		--publish 81:8000 \
+		--mode global \
+		--env SWARM_MODE="GLOBAL" \
+		--env SWARM_PUBLIC_PORT=81 \
+		rcarmo/demo-frontend
 
 # Deploy the test stack (experimental)
 deploy-stack:
@@ -101,38 +122,75 @@ tail-helper:
 
 # View deployment details
 view-deployment:
-	az group deployment operation list --resource-group $(RESOURCE_GROUP) --name cli-deployment-$(LOCATION) \
-	--query "[].{OperationID:operationId,Name:properties.targetResource.resourceName,Type:properties.targetResource.resourceType,State:properties.provisioningState,Status:properties.statusCode}" --output table
+	az group deployment operation list \
+		--resource-group $(RESOURCE_GROUP) \
+		--name cli-deployment-$(LOCATION) \
+		--query "[].{OperationID:operationId,Name:properties.targetResource.resourceName,Type:properties.targetResource.resourceType,State:properties.provisioningState,Status:properties.statusCode}" \
+		--output table
 
 # List VMSS instances
 list-agents:
-	az vmss list-instances --resource-group $(RESOURCE_GROUP) --name $(VMSS_NAME) --output table 
+	az vmss list-instances \
+		--resource-group $(RESOURCE_GROUP) \
+		--name $(VMSS_NAME) \
+		--output table 
 
 # Scale VMSS instances
 scale-agents-%:
-	az vmss scale --resource-group $(RESOURCE_GROUP) --name $(VMSS_NAME) --new-capacity $* --output table --no-wait
+	az vmss scale \
+		--resource-group $(RESOURCE_GROUP) \
+		--name $(VMSS_NAME) \
+		--new-capacity $* \
+		--output table \
+		--no-wait
 
 # Stop all VMSS instances
 stop-agents:
-	az vmss stop --resource-group $(RESOURCE_GROUP) --name $(VMSS_NAME) --no-wait
+	az vmss stop \
+		--resource-group $(RESOURCE_GROUP) \
+		--name $(VMSS_NAME) \
+		--no-wait
 
 # Start all VMSS instances
 start-agents:
-	az vmss start --resource-group $(RESOURCE_GROUP) --name $(VMSS_NAME) --no-wait
+	az vmss start \
+		--resource-group $(RESOURCE_GROUP) \
+		--name $(VMSS_NAME) \
+		--no-wait
 
 # Reimage VMSS instances
 reimage-agents-parallel:
 	az vmss reimage --resource-group $(RESOURCE_GROUP) --name $(VMSS_NAME) --no-wait
 
 reimage-agents-serial:
-	az vmss list-instances --resource-group $(RESOURCE_GROUP) --name $(VMSS_NAME) --query [].instanceId --output tsv \
-| xargs -I{} az vmss reimage --resource-group $(RESOURCE_GROUP) --name $(VMSS_NAME) --instance-id {} --output table
+	az vmss list-instances \
+		--resource-group $(RESOURCE_GROUP) \
+		--name $(VMSS_NAME) \
+		--query [].instanceId \
+		--output tsv \
+	| xargs -I{} az vmss reimage \
+		--resource-group $(RESOURCE_GROUP) \
+		--name $(VMSS_NAME) \
+		--instance-id {} \
+		--output table
 
 chaos-monkey:
-	az vmss list-instances --resource-group $(RESOURCE_GROUP) --name $(VMSS_NAME) --query [].instanceId --output tsv | shuf \
-| xargs -I{} az vmss restart --resource-group $(RESOURCE_GROUP) --name $(VMSS_NAME) --instance-id {} --output table
+	az vmss list-instances \
+		--resource-group $(RESOURCE_GROUP) \
+		--name $(VMSS_NAME) \
+		--query [].instanceId \
+		--output tsv \
+	| shuf \
+	| xargs -I{} az vmss restart \
+		--resource-group $(RESOURCE_GROUP)
+		--name $(VMSS_NAME) \
+		--instance-id {} \
+		--output table
 
 
 # List endpoints
 list-endpoints:
-	az network public-ip list --query '[].{dnsSettings:dnsSettings.fqdn}' --resource-group $(RESOURCE_GROUP) --output table
+	az network public-ip list \
+		--resource-group $(RESOURCE_GROUP) \
+		--query '[].{dnsSettings:dnsSettings.fqdn}' \
+		--output table
