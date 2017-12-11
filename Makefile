@@ -1,4 +1,4 @@
-# Set environment variables (if they're not defined yet)
+# Set environment variables
 export RESOURCE_GROUP?=swarm-cluster
 export LOCATION?=eastus
 export MASTER_COUNT?=1
@@ -9,8 +9,12 @@ export VMSS_NAME=agents
 export ADMIN_USERNAME?=cluster
 export TIMESTAMP=`date "+%Y-%m-%d-%H-%M-%S"`
 
+# Permanent local overrides
+-include .env
+
 SSH_KEY_FILES:=$(ADMIN_USERNAME).pem $(ADMIN_USERNAME).pub
 SSH_KEY:=$(ADMIN_USERNAME).pem
+
 # Do not output warnings, do not validate or add remote host keys (useful when doing successive deployments or going through the load balancer)
 SSH_TO_MASTER:=ssh -q -A -i keys/$(SSH_KEY) $(ADMIN_USERNAME)@$(MASTER_FQDN) -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null
 
@@ -22,25 +26,19 @@ resources:
 locations:
 	az account list-locations --output table
 
-# Generate SSH keys for the cluster
+# Generate SSH keys for the cluster (optional)
 keys:
-	-mkdir keys
+	mkdir keys
 	ssh-keygen -b 2048 -t rsa -f keys/$(ADMIN_USERNAME) -q -N ""
 	mv keys/$(ADMIN_USERNAME) keys/$(ADMIN_USERNAME).pem
 
-
 # Generate the Azure Resource Template parameter files
 params:
-	-mkdir parameters
-	python genparams.py $(ADMIN_USERNAME) > $(PARAMETERS_FILE)
+	@mkdir parameters 2> /dev/null; python genparams.py > parameters/cluster.json
 
-
-# Destroy the entire resource group and all cluster resources
-destroy-cluster:
-	az group delete \
-		--name $(RESOURCE_GROUP) \
-		--no-wait
-
+# Cleanup parameters
+clean:
+	rm -rf parameters
 
 # Create a resource group and deploy the cluster resources inside it
 deploy-cluster:
@@ -49,13 +47,15 @@ deploy-cluster:
 		--template-file templates/cluster.json \
 		--parameters @parameters/cluster.json \
 		--resource-group $(RESOURCE_GROUP) \
-		--name cli-$(LOCATION)-$(TIMESTAMP) \
+		--name cli-$(LOCATION) \
 		--output table \
 		--no-wait
 
-# Cleanup parameters
-clean:
-	rm -rf parameters
+# Destroy the entire resource group and all cluster resources
+destroy-cluster:
+	az group delete \
+		--name $(RESOURCE_GROUP) \
+		--no-wait
 
 # Deploy the Swarm monitor
 deploy-monitor:
@@ -92,15 +92,36 @@ deploy-global-service:
 		--env SWARM_PUBLIC_PORT=81 \
 		rcarmo/demo-frontend
 
-# Deploy the test stack (experimental)
+# Destroy the global service
+destroy-global-service:
+	$(SSH_TO_MASTER) \
+	docker service rm global
+
+# Deploy the test stack
 deploy-stack:
 	cat test-stack/docker-compose.yml | $(SSH_TO_MASTER) "tee > ~/docker-compose.yml"
 	$(SSH_TO_MASTER) "docker stack deploy -c ~/docker-compose.yml test-stack"
 
+destroy-stack:
+	$(SSH_TO_MASTER) docker stack rm test-stack
+
+
+deploy-weavescope:
+	$(SSH_TO_MASTER) "curl -L git.io/scope -o ~/scope && chmod a+x ~/scope && ~/scope launch"
+
 # Scale the demo service
+scale-service-20:
+	$(SSH_TO_MASTER) \
+	docker service scale replicated=20
+
 scale-service-%:
 	$(SSH_TO_MASTER) \
 	docker service scale replicated=$*
+
+# Destroy the global service
+destroy-service:
+	$(SSH_TO_MASTER) \
+	docker service rm replicated
 
 # Update the service (rebalancing doesn't work yet)
 update-service:
@@ -124,7 +145,7 @@ tail-helper:
 view-deployment:
 	az group deployment operation list \
 		--resource-group $(RESOURCE_GROUP) \
-		--name cli-deployment-$(LOCATION) \
+		--name cli-$(LOCATION) \
 		--query "[].{OperationID:operationId,Name:properties.targetResource.resourceName,Type:properties.targetResource.resourceType,State:properties.provisioningState,Status:properties.statusCode}" \
 		--output table
 
@@ -182,11 +203,10 @@ chaos-monkey:
 		--output tsv \
 	| shuf \
 	| xargs -I{} az vmss restart \
-		--resource-group $(RESOURCE_GROUP)
+		--resource-group $(RESOURCE_GROUP) \
 		--name $(VMSS_NAME) \
 		--instance-id {} \
 		--output table
-
 
 # List endpoints
 list-endpoints:

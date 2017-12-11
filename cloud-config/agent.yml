@@ -14,7 +14,7 @@ write_files:
     permissions: 0755
     content: |
       #!/bin/bash
-      HOSTNAME=$(hostname)
+      HOSTNAME=`hostname`
       # signal the master to drain services from our node
       wget -nv -q -O - --retry-connrefused 10 --waitretry 5 http://master0:1337/drain/$HOSTNAME
       docker swarm leave
