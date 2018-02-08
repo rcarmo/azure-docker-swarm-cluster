@@ -1,8 +1,6 @@
 # azure-docker-swarm-cluster
 
-A dynamically resizable Docker Swarm cluster for Azure:
-
-<iframe src="https://livestream.com/accounts/16154575/events/6354092/player?width=560&amp;height=315&amp;autoPlay=true&amp;mute=false" frameborder="0" scrolling="auto" allowfullscreen="" width="560" height="315" allowtransparency="true"></iframe>
+A dynamically resizable Docker Swarm cluster for Azure. Watch the [Channel 9 video](https://channel9.msdn.com/Events/Journey-to-the-Websummit--Online-Masterclasses/Deploying-Rancher-on-Azure--Rui-Carmo-Microsoft-Services/Scaling-Docker-Swarms-on-Azure--Rui-Carmo-Microsoft) for a long(ish) demo that starts around the 30m mark, with an explanation of the Swarm cluster handling around the 1h mark.
 
 ## What
 
