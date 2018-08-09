@@ -68,9 +68,21 @@ from os import environ
         <hr>
         <table class="table">
             <tr>
-                <th scope="col">Variable Name</th>
+                <th scope="col">Header/Variable Name</th>
                 <th scope="col">Value</th>
             </tr>
+% for k, v in sorted(list(request.headers.items())):
+            <tr>
+                <th scope="row">${k}</th>
+                <td>${v}</td>
+            </tr>
+% endfor
+% for k, v in sorted(list(request.form.items())):
+            <tr>
+                <th scope="row">${k}</th>
+                <td>${v}</td>
+            </tr>
+% endfor
 % for k, v in sorted(list(request.args.items())):
             <tr>
                 <th scope="row">${k}</th>

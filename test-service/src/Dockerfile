@@ -1,5 +1,5 @@
 # This is a minimal Apline image that preinstalls requirements upon Docker build
-FROM rcarmo/alpine-python:3.6-onbuild
+FROM rcarmo/ubuntu-python:3.7-onbuild-amd64
 
 ADD . /app
 WORKDIR /app
