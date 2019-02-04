@@ -1,4 +1,4 @@
-# This is a minimal Apline image that preinstalls requirements upon Docker build
+# This is a minimal Ubuntu image that preinstalls requirements upon Docker build
 FROM rcarmo/ubuntu-python:3.7-onbuild-amd64
 
 ADD . /app
