@@ -8,7 +8,7 @@ write_files:
       # make sure there's no disk state that points to an existing swarm
       docker swarm leave
       # get the swarm worker token
-      TOKEN=$(wget -nv -q -O - --retry-connrefused 10 --waitretry 5 http://master0:1337/join/worker)
+      TOKEN=$(wget -nv -q -O - --retry-connrefused 20 --waitretry 5 http://master0:1337/join/worker)
       docker swarm join --token $TOKEN master0:2377
   - path: /root/leave-swarm.sh
     permissions: 0755
@@ -16,7 +16,7 @@ write_files:
       #!/bin/bash
       HOSTNAME=`hostname`
       # signal the master to drain services from our node
-      wget -nv -q -O - --retry-connrefused 10 --waitretry 5 http://master0:1337/drain/$HOSTNAME
+      wget -nv -q -O - --retry-connrefused 20 --waitretry 5 http://master0:1337/drain/$HOSTNAME
       docker swarm leave
   - path: /etc/systemd/system/swarm-join.service
     permissions: 0444
@@ -42,11 +42,19 @@ write_files:
       ExecStart=/root/leave-swarm.sh
       [Install]
       WantedBy=halt.target reboot.target shutdown.target
+  - path: /etc/waagent.conf
+    permissions: 0444
+    content: |
+      ResourceDisk.Format=y
+      ResourceDisk.Filesystem=ext4
+      ResourceDisk.MountPoint=/mnt/resource
+      ResourceDisk.EnableSwap=y
+      ResourceDisk.SwapSizeMB=2048
 
 apt:
   sources:
     docker_ce.list:
-      source: "deb https://download.docker.com/linux/ubuntu xenial stable"
+      source: "deb https://download.docker.com/linux/ubuntu bionic stable"
       keyserver: p80.pool.sks-keyservers.net
       keyid: 9DC858229FC7DD38854AE2D88D81803C0EBFCD88
 

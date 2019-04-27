@@ -54,11 +54,19 @@ write_files:
       ExecStart=/root/swarm-helper.py
       [Install]
       WantedBy=multi-user.target
+  - path: /etc/waagent.conf
+    permissions: 0444
+    content: |
+      ResourceDisk.Format=y
+      ResourceDisk.Filesystem=ext4
+      ResourceDisk.MountPoint=/mnt/resource
+      ResourceDisk.EnableSwap=y
+      ResourceDisk.SwapSizeMB=2048
 
 apt:
   sources:
     docker_ce.list:
-      source: "deb https://download.docker.com/linux/ubuntu xenial stable"
+      source: "deb https://download.docker.com/linux/ubuntu bionic stable"
       keyserver: p80.pool.sks-keyservers.net
       keyid: 9DC858229FC7DD38854AE2D88D81803C0EBFCD88
 
