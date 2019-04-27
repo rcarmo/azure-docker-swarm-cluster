@@ -44,8 +44,9 @@ This was originally built as [a barebones cluster template](http://taoofmac.com/
 
     az login
     make keys
+    make deploy-storage
     make params
-    make deploy-cluster
+    make deploy-compute
     make view-deployment
     # Go to the Azure portal and check the deployment progress
     
