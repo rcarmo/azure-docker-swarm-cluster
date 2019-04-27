@@ -44,6 +44,12 @@ params = {
     "agentCount": {
         "value": int(environ.get('AGENT_COUNT', 2))
     },
+    "minAgentCount": {
+        "value": int(environ.get('MIN_AGENT_COUNT', 1))
+    },
+    "maxAgentCount": {
+        "value": int(environ.get('MAX_AGENT_COUNT', 5))
+    },
     "agentCustomData": {
         "value": slurp("agent.yml")
     },
