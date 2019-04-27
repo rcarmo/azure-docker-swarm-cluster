@@ -4,9 +4,11 @@ A dynamically resizable Docker Swarm cluster for Azure. Watch the [Channel 9 vid
 
 ## What
 
-This is a barebones Azure Resource Manager template that automatically deploys a [Docker][d] Swarm cluster atop Ubuntu 16.04. This cluster has 1-5 master VMs and a VM scaleset for workers/agents, plus the required network infrastructure:
+This is a barebones Azure Resource Manager template that automatically deploys a [Docker][d] Swarm cluster atop Ubuntu 18.04. This cluster has 1-5 master VMs and a VM scaleset for workers/agents, plus the required network infrastructure:
 
 ![Cluster diagram](generic-cluster.png) 
+
+The template defaults to deploying B-Series VMs (`B1ls`) with the smallest possible managed disk size (S4, 32GB).
 
 The key aspect of this template is that _you can add and remove agents at will_ simply by resizing the VM scaleset - the cluster comes with a few (very simple) helper scripts that allow nodes to join and leave the swarm as they are created/destroyed. 
 

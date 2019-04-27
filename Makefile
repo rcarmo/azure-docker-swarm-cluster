@@ -1,5 +1,5 @@
 # Set environment variables
-export RESOURCE_GROUP?=swarm-cluster
+export RESOURCE_GROUP?=ci-swarm-cluster
 export LOCATION?=eastus
 export MASTER_COUNT?=1
 export AGENT_COUNT?=3

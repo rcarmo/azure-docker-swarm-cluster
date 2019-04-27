@@ -23,7 +23,7 @@
     },
     "masterSize": {
       "type": "string",
-      "defaultValue": "Standard_DS1_v2",
+      "defaultValue": "Standard_B1ls",
       "metadata": {
         "description": "Master instance size"
       },
@@ -58,7 +58,7 @@
     },
     "agentSize": {
       "type": "string",
-      "defaultValue": "Standard_DS1_v2",
+      "defaultValue": "Standard_B1ls",
       "metadata": {
         "description": "Agent instance size"
       },
@@ -216,7 +216,7 @@
           "imageReference": {
             "publisher": "Canonical",
             "offer": "UbuntuServer",
-            "sku": "16.04-LTS",
+            "sku": "18.04-LTS",
             "version": "latest"
           },
           "osDisk": {
@@ -269,7 +269,7 @@
         "capacity": "[parameters('agentCount')]"
       },
       "properties": {
-        "overprovision": "false",
+        "overprovision": false,
         "upgradePolicy": {
           "mode": "Manual"
         },
@@ -302,7 +302,7 @@
             "imageReference": {
               "publisher": "Canonical",
               "offer": "UbuntuServer",
-              "sku": "16.04-LTS",
+              "sku": "18.04-LTS",
               "version": "latest"
             }
           },
