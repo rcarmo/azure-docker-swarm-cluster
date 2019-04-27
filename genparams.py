@@ -53,8 +53,8 @@ params = {
     "agentSize": {
         "value": "Standard_B1ls"
     },
-    "saType": {
-        "value": "Standard_LRS"
+    "diskType": {
+        "value": "StandardSSD_LRS"
     }
 }
 
