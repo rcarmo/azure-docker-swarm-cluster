@@ -349,7 +349,7 @@
       "comments": "Autoscale Settings",
       "type": "microsoft.insights/autoscalesettings",
       "name": "[parameters('agentPrefix')]",
-      "apiVersion": "2014-04-01",
+      "apiVersion": "2015-04-01",
       "location": "[resourceGroup().location]",
       "properties": {
         "profiles": [
@@ -371,7 +371,7 @@
                   "timeWindow": "PT5M",
                   "timeAggregation": "Average",
                   "operator": "GreaterThan",
-                  "threshold": 75
+                  "threshold": 50
                 },
                 "scaleAction": {
                   "direction": "Increase",
@@ -417,7 +417,7 @@
       "apiVersion": "2016-04-30-preview",
       "location": "[resourceGroup().location]",
       "properties": {
-        "managed": "true",
+        "managed": true,
         "platformFaultDomainCount": "[parameters('asFDCount')]",
         "platformUpdateDomainCount": "[parameters('asUDCount')]"
       }
