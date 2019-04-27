@@ -6,11 +6,11 @@ from os.path import exists, join
 from sys import argv, stderr, stdout
 from string import Template
 
-def slurp(filename, as_template=False):
+def slurp(filename, as_template=True):
     with open("cloud-config/" + filename, "r") as config:
         if as_template:
             # parse a YAML file and replace ${VALUE}s
-            buffer = Template(config.read()).substitute(environ)
+            buffer = Template(config.read()).safe_substitute(environ)
         else:
             buffer = config.read()
     return b64encode(bytes(buffer, 'utf-8')).decode()
@@ -64,4 +64,4 @@ params = {
     }
 }
 
-stdout.write(dumps(params))
+stdout.write(dumps(params, indent=4))

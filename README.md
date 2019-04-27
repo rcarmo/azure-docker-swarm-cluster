@@ -8,7 +8,7 @@ This is a barebones Azure Resource Manager template that automatically deploys a
 
 ![Cluster diagram](generic-cluster.png) 
 
-The template defaults to deploying B-Series VMs (`B1ls`) with the smallest possible managed disk size (S4, 32GB).
+The template defaults to deploying B-Series VMs (`B1ls`) with the smallest possible managed disk size (S4, 32GB). It also deploys (and mounts) an Azure File Share on all machines.
 
 The key aspect of this template is that _you can add and remove agents at will_ simply by resizing the VM scaleset - the cluster comes with a few (very simple) helper scripts that allow nodes to join and leave the swarm as they are created/destroyed. 
 
@@ -19,8 +19,9 @@ This was originally built as [a barebones cluster template](http://taoofmac.com/
 ## How
 
 * `make keys` - generates an SSH key for provisioning
+* `make deploy-storage` - deploys shared storage
 * `make params` - generates ARM template parameters
-* `make deploy-cluster` - deploys cluster resources and pre-provisions Docker on all machines
+* `make deploy-compute` - deploys cluster resources and pre-provisions Docker on all machines
 * `make view-deployment` - view deployment progress
 * `make deploy-monitor` - deploys a Swarm monitor container on `http://master0:8080`
 * `make deploy-replicated-service` - deploys a simple web service onto the Swarm cluster (8 replicas)
@@ -112,7 +113,7 @@ If instantiation speed is a concern, this can be done once for each role and bak
 
 There are several things that can be done to improve upon this:
 
-* Use the instance metadata endpoint at http://169.254.169.254 to assess instance state
+* Use the instance metadata endpoint at http://169.254.169.254 to assess instance state and handle [scheduled events](https://docs.microsoft.com/en-us/azure/virtual-machines/windows/scheduled-events)
 * Ensure this works with multiple masters (cursory testing suggests it works just fine, although it can be fiddly for agents to re-try connecting to up to 5 possible masters, etc.)
 * Strengthen the token exchange mechanism (adding SSL and/or a shared `nonce` to the registration/draining URLs is left as an exercise to the reader)
 * Find ways to nudge Swarm into re-balancing the load between nodes (there are already multiple approaches for this in the [Docker][d] issue list - (re)tagging might be the simplest)

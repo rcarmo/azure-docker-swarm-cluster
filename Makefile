@@ -1,13 +1,17 @@
 # Set environment variables
-export RESOURCE_GROUP?=ci-swarm-cluster
+export COMPUTE_GROUP?=ci-swarm-cluster
+export STORAGE_GROUP?=ci-swarm-storage
 export LOCATION?=eastus
 export MASTER_COUNT?=1
 export AGENT_COUNT?=3
-export MASTER_FQDN=$(RESOURCE_GROUP)-master0.$(LOCATION).cloudapp.azure.com
-export LOADBALANCER_FQDN=$(RESOURCE_GROUP)-agents-lb.$(LOCATION).cloudapp.azure.com
+export MASTER_FQDN=$(COMPUTE_GROUP)-master0.$(LOCATION).cloudapp.azure.com
+export LOADBALANCER_FQDN=$(COMPUTE_GROUP)-agents-lb.$(LOCATION).cloudapp.azure.com
 export VMSS_NAME=agents
 export ADMIN_USERNAME?=cluster
 export TIMESTAMP=`date "+%Y-%m-%d-%H-%M-%S"`
+export FILE_SHARES=config data registry
+export STORAGE_ACCOUNT_NAME?=shared0$(shell echo $(MASTER_FQDN)|shasum|base64|tr '[:upper:]' '[:lower:]'|cut -c -16)
+export SHARE_NAME?=data
 
 # Permanent local overrides
 -include .env
@@ -37,27 +41,57 @@ keys:
 
 # Generate the Azure Resource Template parameter files
 params:
-	@mkdir parameters 2> /dev/null; python genparams.py > parameters/cluster.json
+	$(eval STORAGE_ACCOUNT_KEY := $(shell az storage account keys list \
+		--resource-group $(STORAGE_GROUP) \
+    	--account-name $(STORAGE_ACCOUNT_NAME) \
+		--query "[0].value" | tr -d '"'))
+	@mkdir parameters 2> /dev/null; STORAGE_ACCOUNT_KEY=$(STORAGE_ACCOUNT_KEY) python genparams.py > parameters/cluster.json
 
 # Cleanup parameters
 clean:
 	rm -rf parameters
 
+deploy-storage:
+	-az group create --name $(STORAGE_GROUP) --location $(LOCATION) --output table 
+	-az storage account create \
+		--name $(STORAGE_ACCOUNT_NAME) \
+		--resource-group $(STORAGE_GROUP) \
+		--location $(LOCATION) \
+		--https-only \
+		--output table
+	$(foreach SHARE_NAME, $(FILE_SHARES), \
+		az storage share create --account-name $(STORAGE_ACCOUNT_NAME) --name $(SHARE_NAME) --output tsv;)
+
+
 # Create a resource group and deploy the cluster resources inside it
-deploy-cluster:
-	-az group create --name $(RESOURCE_GROUP) --location $(LOCATION) --output table 
+deploy-compute:
+	-az group create --name $(COMPUTE_GROUP) --location $(LOCATION) --output table 
 	az group deployment create \
 		--template-file templates/cluster.json \
 		--parameters @parameters/cluster.json \
-		--resource-group $(RESOURCE_GROUP) \
+		--resource-group $(COMPUTE_GROUP) \
 		--name cli-$(LOCATION) \
 		--output table \
 		--no-wait
 
+# create a set of SMB shares on the storage account
+create-shares:
+	$(eval STORAGE_ACCOUNT := $(shell az storage account list --resource-group ci-swarm-cluster --output tsv --query "[].name"))
+	$(foreach SHARE_NAME, $(FILE_SHARES), \
+		az storage share create --account-name $(STORAGE_ACCOUNT_NAME) --name $(SHARE_NAME) --output tsv;)
+
 # Destroy the entire resource group and all cluster resources
 destroy-cluster:
 	az group delete \
-		--name $(RESOURCE_GROUP) \
+		--name $(COMPUTE_GROUP) \
+		--no-wait
+	az group delete \
+		--name $(STORAGE_GROUP) \
+		--no-wait
+
+destroy-compute:
+	az group delete \
+		--name $(COMPUTE_GROUP) \
 		--no-wait
 
 # Deploy the Swarm monitor
@@ -147,7 +181,7 @@ tail-helper:
 # View deployment details
 view-deployment:
 	az group deployment operation list \
-		--resource-group $(RESOURCE_GROUP) \
+		--resource-group $(COMPUTE_GROUP) \
 		--name cli-$(LOCATION) \
 		--query "[].{OperationID:operationId,Name:properties.targetResource.resourceName,Type:properties.targetResource.resourceType,State:properties.provisioningState,Status:properties.statusCode}" \
 		--output table
@@ -155,14 +189,14 @@ view-deployment:
 # List VMSS instances
 list-agents:
 	az vmss list-instances \
-		--resource-group $(RESOURCE_GROUP) \
+		--resource-group $(COMPUTE_GROUP) \
 		--name $(VMSS_NAME) \
 		--output table 
 
 # Scale VMSS instances
 scale-agents-%:
 	az vmss scale \
-		--resource-group $(RESOURCE_GROUP) \
+		--resource-group $(COMPUTE_GROUP) \
 		--name $(VMSS_NAME) \
 		--new-capacity $* \
 		--output table \
@@ -171,42 +205,42 @@ scale-agents-%:
 # Stop all VMSS instances
 stop-agents:
 	az vmss stop \
-		--resource-group $(RESOURCE_GROUP) \
+		--resource-group $(COMPUTE_GROUP) \
 		--name $(VMSS_NAME) \
 		--no-wait
 
 # Start all VMSS instances
 start-agents:
 	az vmss start \
-		--resource-group $(RESOURCE_GROUP) \
+		--resource-group $(COMPUTE_GROUP) \
 		--name $(VMSS_NAME) \
 		--no-wait
 
 # Reimage VMSS instances
 reimage-agents-parallel:
-	az vmss reimage --resource-group $(RESOURCE_GROUP) --name $(VMSS_NAME) --no-wait
+	az vmss reimage --resource-group $(COMPUTE_GROUP) --name $(VMSS_NAME) --no-wait
 
 reimage-agents-serial:
 	az vmss list-instances \
-		--resource-group $(RESOURCE_GROUP) \
+		--resource-group $(COMPUTE_GROUP) \
 		--name $(VMSS_NAME) \
 		--query [].instanceId \
 		--output tsv \
 	| xargs -I{} az vmss reimage \
-		--resource-group $(RESOURCE_GROUP) \
+		--resource-group $(COMPUTE_GROUP) \
 		--name $(VMSS_NAME) \
 		--instance-id {} \
 		--output table
 
 chaos-monkey:
 	az vmss list-instances \
-		--resource-group $(RESOURCE_GROUP) \
+		--resource-group $(COMPUTE_GROUP) \
 		--name $(VMSS_NAME) \
 		--query [].instanceId \
 		--output tsv \
 	| shuf \
 	| xargs -I{} az vmss restart \
-		--resource-group $(RESOURCE_GROUP) \
+		--resource-group $(COMPUTE_GROUP) \
 		--name $(VMSS_NAME) \
 		--instance-id {} \
 		--output table
@@ -214,6 +248,6 @@ chaos-monkey:
 # List endpoints
 list-endpoints:
 	az network public-ip list \
-		--resource-group $(RESOURCE_GROUP) \
+		--resource-group $(COMPUTE_GROUP) \
 		--query '[].{dnsSettings:dnsSettings.fqdn}' \
 		--output table
