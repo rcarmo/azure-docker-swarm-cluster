@@ -157,10 +157,13 @@
     {
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('diagsName')]",
+      "sku": {
+        "name": "[parameters('saType')]"
+      },
+      "kind": "StorageV2",
       "apiVersion": "2019-04-01",
       "location": "[resourceGroup().location]",
       "properties": {
-        "accountType": "[parameters('saType')]",
         "supportsHttpsTrafficOnly": true
       }
     },
@@ -427,7 +430,6 @@
       "apiVersion": "2019-03-01",
       "location": "[resourceGroup().location]",
       "properties": {
-        "managed": true,
         "platformFaultDomainCount": "[parameters('asFDCount')]",
         "platformUpdateDomainCount": "[parameters('asUDCount')]"
       }
