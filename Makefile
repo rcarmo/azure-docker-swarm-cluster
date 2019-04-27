@@ -26,6 +26,9 @@ resources:
 locations:
 	az account list-locations --output table
 
+sizes:
+	az vm list-sizes --location=$(LOCATION) --output table
+
 # Generate SSH keys for the cluster (optional)
 keys:
 	mkdir keys
