@@ -1,6 +1,6 @@
 # Set environment variables
-export COMPUTE_GROUP?=ci-swarm-cluster
-export STORAGE_GROUP?=ci-swarm-storage
+export COMPUTE_GROUP?=swarm-cluster
+export STORAGE_GROUP?=swarm-storage
 export LOCATION?=eastus
 export MASTER_COUNT?=1
 export AGENT_COUNT?=3
@@ -81,17 +81,14 @@ create-shares:
 		az storage share create --account-name $(STORAGE_ACCOUNT_NAME) --name $(SHARE_NAME) --output tsv;)
 
 # Destroy the entire resource group and all cluster resources
-destroy-cluster:
-	az group delete \
-		--name $(COMPUTE_GROUP) \
-		--no-wait
-	az group delete \
-		--name $(STORAGE_GROUP) \
-		--no-wait
-
 destroy-compute:
 	az group delete \
 		--name $(COMPUTE_GROUP) \
+		--no-wait
+
+destroy-storage:
+	az group delete \
+		--name $(STORAGE_GROUP) \
 		--no-wait
 
 # Deploy the Swarm monitor
